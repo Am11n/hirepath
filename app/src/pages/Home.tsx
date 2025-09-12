@@ -5,7 +5,7 @@ import { ChallengeCard } from '../components/ChallengeCard';
 
 const Page = styled.main`
 	min-height: 100vh;
-	background: url('/hero.jpg') center/cover no-repeat fixed, linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+	background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
 	color: #ffffff;
 `;
 
@@ -16,32 +16,66 @@ const Container = styled.div`
 `;
 
 const Hero = styled.section`
-	padding: 5rem 0 3rem 0;
+	position: relative;
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+	text-align: left;
+	overflow: clip;
+`;
+
+const HeroInner = styled.div`
+	width: 100%;
+	max-width: 1200px;
+	padding: 5rem 1rem 3rem 1rem;
+	margin: 0 auto;
 	display: grid;
 	gap: 1rem;
-	text-align: left;
-	@media (max-width: 640px) {
-		padding-top: 4rem;
-	}
+`;
+
+const HeroMedia = styled.div`
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	overflow: hidden;
+`;
+
+const Video = styled.video`
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+	pointer-events: none;
+`;
+
+const HeroOverlay = styled.div`
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(11, 18, 32, 0.65) 0%, rgba(15, 23, 42, 0.85) 100%);
+`;
+
+const HeroContent = styled.div`
+	position: relative;
+	z-index: 1;
 `;
 
 const Heading = styled.h1`
 	margin: 0;
-	font-size: clamp(2rem, 5vw, 3rem);
-	line-height: 1.1;
+	font-size: clamp(2.25rem, 6vw, 3.5rem);
+	line-height: 1.05;
 	font-weight: 800;
 	letter-spacing: -0.02em;
 `;
 
 const Subheading = styled.p`
 	margin: 0;
-	max-width: 56ch;
+	max-width: 64ch;
 	color: #e5e7eb;
-	font-size: clamp(1rem, 2.5vw, 1.125rem);
+	font-size: clamp(1.05rem, 2.5vw, 1.25rem);
 `;
 
 const CTA = styled.div`
-	margin-top: 1rem;
+	margin-top: 1.25rem;
 `;
 
 const PrimaryButton = styled.a`
@@ -49,7 +83,7 @@ const PrimaryButton = styled.a`
 	background: #4338ca;
 	color: white;
 	text-decoration: none;
-	padding: 0.75rem 1rem;
+	padding: 0.85rem 1.1rem;
 	border-radius: 12px;
 	font-weight: 600;
 	transition: background-color 0.2s ease;
@@ -79,16 +113,26 @@ export const Home: FC = () => {
 	return (
 		<Page>
 			<Navbar />
+			<Hero aria-labelledby="hero-title" aria-describedby="hero-desc">
+				<HeroMedia aria-hidden="true">
+					<Video autoPlay muted loop playsInline preload="metadata" poster="/hero.jpg">
+						<source src="/videos/hero.mp4" type="video/mp4" />
+					</Video>
+					<HeroOverlay aria-hidden="true" />
+				</HeroMedia>
+				<HeroContent>
+					<HeroInner>
+						<Heading id="hero-title">Sharpen your skills with hands-on challenges</Heading>
+						<Subheading id="hero-desc">Practice real-world tasks, build a job-ready portfolio, and join thousands building in public.</Subheading>
+						<CTA>
+							<PrimaryButton href="#challenges" aria-label="View all challenges">
+								View All Challenges
+							</PrimaryButton>
+						</CTA>
+					</HeroInner>
+				</HeroContent>
+			</Hero>
 			<Container>
-				<Hero aria-labelledby="hero-title" aria-describedby="hero-desc">
-					<Heading id="hero-title">Sharpen your skills with hands-on challenges</Heading>
-					<Subheading id="hero-desc">Practice real-world tasks, build a job-ready portfolio, and join thousands building in public.</Subheading>
-					<CTA>
-						<PrimaryButton href="#challenges" aria-label="View all challenges">
-							View All Challenges
-						</PrimaryButton>
-					</CTA>
-				</Hero>
 				<Grid id="challenges" aria-label="Popular challenges">
 					<ChallengeCard title="Frontend Landing Page" participants={1324} imageUrl="/images/landing.jpg" />
 					<ChallengeCard title="REST API with Express" participants={982} imageUrl="/images/api.jpg" />

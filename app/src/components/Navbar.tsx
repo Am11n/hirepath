@@ -6,29 +6,33 @@ const Header = styled.header`
 	top: 0;
 	z-index: 10;
 	width: 100%;
-	background: rgba(0, 0, 0, 0.4);
-	backdrop-filter: saturate(120%) blur(6px);
-	color: #fff;
+	background: #FAFAFA;
+	color: #0b1220;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
 `;
 
 const Nav = styled.nav`
 	max-width: 1200px;
 	margin: 0 auto;
-	padding: 0.75rem 1rem;
-	display: flex;
+	padding: 0.9rem 1rem; /* slightly taller for visual balance */
+	display: grid;
+	grid-template-columns: auto 1fr auto;
 	align-items: center;
-	justify-content: space-between;
+	gap: 1rem;
 `;
 
-const Brand = styled.a`
-	font-size: 1.125rem;
-	font-weight: 700;
-	letter-spacing: 0.3px;
-	color: #fff;
+const BrandLink = styled.a`
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
 	text-decoration: none;
-	:hover {
-		text-decoration: underline;
-	}
+	color: inherit;
+`;
+
+const BrandImg = styled.img`
+	display: block;
+	height: 56px;
+	width: auto;
 `;
 
 const NavList = styled.ul`
@@ -37,20 +41,44 @@ const NavList = styled.ul`
 	list-style: none;
 	margin: 0;
 	padding: 0;
+	justify-self: center;
 `;
 
 const NavLink = styled.a`
-	color: #eaeaea;
+	color: #111827;
 	text-decoration: none;
 	font-size: 0.95rem;
 	padding: 0.5rem 0.6rem;
 	border-radius: 8px;
-	transition: background-color 0.2s ease;
+	transition: background-color 0.2s ease, color 0.2s ease;
 	:hover,
 	:focus-visible {
-		background-color: rgba(255, 255, 255, 0.12);
+		background-color: rgba(0, 0, 0, 0.06);
 		outline: none;
-		color: #fff;
+		color: #0b1220;
+	}
+`;
+
+const LoginButton = styled.a`
+	justify-self: end;
+	display: inline-block;
+	padding: 0.5rem 0.9rem;
+	border-radius: 10px;
+	background: #ffffff;
+	color: #0b1220;
+	border: 1px solid #111827;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+	:focus-visible {
+		outline: 2px solid #1f2937;
+		outline-offset: 2px;
+	}
+	:hover {
+		background: #f3f4f6;
+		color: #0b1220;
+		border-color: #0b1220;
 	}
 `;
 
@@ -58,7 +86,9 @@ export const Navbar: FC = () => {
 	return (
 		<Header>
 			<Nav aria-label="Primary">
-				<Brand href="#" aria-label="HirePath home">HirePath</Brand>
+				<BrandLink href="#" aria-label="HirePath home">
+					<BrandImg src="/logo-hirepath-wide.png" alt="HirePath" />
+				</BrandLink>
 				<NavList role="list">
 					<li>
 						<NavLink href="#challenges">Challenges</NavLink>
@@ -70,6 +100,9 @@ export const Navbar: FC = () => {
 						<NavLink href="#contact">Contact</NavLink>
 					</li>
 				</NavList>
+				<LoginButton href="#login" aria-label="Logg inn">
+					Logg inn
+				</LoginButton>
 			</Nav>
 		</Header>
 	);
