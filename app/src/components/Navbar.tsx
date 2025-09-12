@@ -86,15 +86,15 @@ export const Navbar: FC = () => {
 	return (
 		<Header>
 			<Nav aria-label="Primary">
-				<BrandLink href="#" aria-label="HirePath home">
+				<BrandLink href="/" aria-label="HirePath home">
 					<BrandImg src="/logo-hirepath-wide.png" alt="HirePath" />
 				</BrandLink>
 				<NavList role="list">
 					<li>
-						<NavLink href="#challenges">Challenges</NavLink>
+						<NavLink href="#features">Features</NavLink>
 					</li>
 					<li>
-						<NavLink href="#about">About</NavLink>
+						<NavLink href="/about">About</NavLink>
 					</li>
 					<li>
 						<NavLink href="#contact">Contact</NavLink>
