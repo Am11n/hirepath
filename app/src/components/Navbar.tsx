@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { FC } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header = styled.header`
 	position: sticky;
@@ -136,8 +138,39 @@ const MobileItem = styled.a`
 	:hover, :focus-visible { background: rgba(0,0,0,0.06); outline: none; }
 `;
 
+const ProfileButton = styled.a`
+	justify-self: end;
+	display: inline-block;
+	padding: 0.5rem 0.9rem;
+	border-radius: 10px;
+	background: #4338ca;
+	color: white;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: background-color 0.2s ease;
+	:focus-visible {
+		outline: 2px solid #a5b4fc;
+		outline-offset: 2px;
+	}
+	:hover {
+		background: #3730a3;
+	}
+	@media (max-width: 640px) {
+		display: none;
+	}
+`;
+
 export const Navbar: FC = () => {
 	const [open, setOpen] = useState(false);
+	const { user } = useAuth();
+	const navigate = useNavigate();
+
+	const handleSignOut = async (e: React.MouseEvent) => {
+		e.preventDefault();
+		// Navigation will be handled by AuthContext useEffect
+	};
+
 	return (
 		<Header>
 			<Nav aria-label="Primary">
@@ -145,6 +178,11 @@ export const Navbar: FC = () => {
 					<BrandImg src="/logo-hirepath-wide.png" alt="HirePath" />
 				</BrandLink>
 				<NavList role="list">
+					{user && (
+						<li>
+							<NavLink href="/dashboard">Dashboard</NavLink>
+						</li>
+					)}
 					<li>
 						<NavLink href="/features">Features</NavLink>
 					</li>
@@ -155,15 +193,26 @@ export const Navbar: FC = () => {
 						<NavLink href="/blog">Blog</NavLink>
 					</li>
 				</NavList>
-				<LoginButton href="/signin" aria-label="Sign in">Sign in</LoginButton>
+				{user ? (
+					<ProfileButton href="/profile">Profile</ProfileButton>
+				) : (
+					<LoginButton href="/signin" aria-label="Sign in">Sign in</LoginButton>
+				)}
 				<MenuButton aria-label="Open menu" aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen(v => !v)}>
 					<span>☰</span>
 				</MenuButton>
 				<MobileMenu id="mobile-menu" role="menu" $open={open}>
+					{user && (
+						<MobileItem href="/dashboard" onClick={() => setOpen(false)}>Dashboard</MobileItem>
+					)}
 					<MobileItem href="/features" onClick={() => setOpen(false)}>Features</MobileItem>
 					<MobileItem href="/about" onClick={() => setOpen(false)}>About</MobileItem>
 					<MobileItem href="/blog" onClick={() => setOpen(false)}>Blog</MobileItem>
-					<MobileItem href="/signin" onClick={() => setOpen(false)}>Sign in</MobileItem>
+					{user ? (
+						<MobileItem href="/profile" onClick={() => setOpen(false)}>Profile</MobileItem>
+					) : (
+						<MobileItem href="/signin" onClick={() => setOpen(false)}>Sign in</MobileItem>
+					)}
 				</MobileMenu>
 			</Nav>
 		</Header>
