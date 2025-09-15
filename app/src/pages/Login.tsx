@@ -55,7 +55,8 @@ const PitchText = styled.p`
 const Card = styled.div`
 	margin: 0 auto;
 	width: 100%;
-	max-width: 480px;
+	max-width: min(480px, calc(100vw - 2rem));
+	box-sizing: border-box;
 	background: #0f1a33;
 	border: 1px solid rgba(255, 255, 255, 0.12);
 	border-radius: 16px;
@@ -65,6 +66,7 @@ const Card = styled.div`
 	gap: 1rem;
 	@media (min-width: 640px) {
 		padding: 1.5rem;
+		max-width: 480px;
 	}
 `;
 
