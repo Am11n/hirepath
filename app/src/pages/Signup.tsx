@@ -1,8 +1,10 @@
-import type { FC, FormEvent, ChangeEvent } from 'react';
+import type { FC, ChangeEvent } from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { useAuth } from '../contexts/AuthContext';
 
 const Wrapper = styled.main`
 	min-height: 100vh;
@@ -145,41 +147,84 @@ const Submit = styled.button`
 	:hover { background: #3730a3; }
 `;
 
-const LinksRow = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
-	flex-wrap: wrap;
-	@media (max-width: 380px) {
-		flex-direction: column;
-		align-items: stretch;
-		gap: 0.4rem;
-	}
-`;
-
 const LinkButton = styled.a`
 	color: #c7d2fe;
 	text-decoration: none;
 	font-weight: 600;
 	font-size: 0.95rem;
+	text-align: center;
 	:hover { text-decoration: underline; }
 `;
 
+const GDPRText = styled.p`
+	margin: 1.5rem 0 0 0;
+	font-size: 0.8rem;
+	color: #94a3b8;
+	text-align: center;
+`;
+
+const Error = styled.div`
+	background: rgba(220, 38, 38, 0.15);
+	border: 1px solid rgba(220, 38, 38, 0.3);
+	border-radius: 10px;
+	padding: 0.75rem;
+	color: #fecaca;
+	font-size: 0.9rem;
+`;
+
+const Success = styled.div`
+	background: rgba(16, 185, 129, 0.15);
+	border: 1px solid rgba(16, 185, 129, 0.3);
+	border-radius: 10px;
+	padding: 0.75rem;
+	color: #6ee7b7;
+	font-size: 0.9rem;
+`;
+
 export const Signup: FC = () => {
-	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+	const [confirmPassword, setConfirmPassword] = useState('');
+	const [error, setError] = useState('');
+	const [success, setSuccess] = useState('');
+	const [loading, setLoading] = useState(false);
+	const { signUp } = useAuth();
+	const navigate = useNavigate();
 
-	const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		const nextErrors: { name?: string; email?: string; password?: string } = {};
-		if (!name.trim()) nextErrors.name = 'Please enter your name.';
-		if (!email.includes('@')) nextErrors.email = 'Please enter a valid email.';
-		if (password.length < 6) nextErrors.password = 'Password must be at least 6 characters.';
-		setErrors(nextErrors);
-		if (Object.keys(nextErrors).length === 0) alert('Account created (demo)');
+		setLoading(true);
+		setError('');
+		setSuccess('');
+
+		// Validate passwords match
+		if (password !== confirmPassword) {
+			setError('Passwords do not match');
+			setLoading(false);
+			return;
+		}
+
+		try {
+			const { error: signUpError } = await signUp(email, password);
+			
+			if (signUpError) {
+				setError(signUpError.message);
+			} else {
+				setSuccess('Account created successfully! Please check your email for confirmation.');
+				// Clear form
+				setEmail('');
+				setPassword('');
+				setConfirmPassword('');
+				// Redirect to login page after short delay
+				setTimeout(() => {
+					navigate('/signin');
+				}, 3000);
+			}
+		} catch (err) {
+			setError('An unexpected error occurred. Please try again.');
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -193,30 +238,53 @@ export const Signup: FC = () => {
 				<Card>
 					<Title>Sign up</Title>
 					<Lead>Create your account to get started.</Lead>
-					<Form onSubmit={onSubmit} aria-labelledby="signup-title">
-						<Field>
-							<Icon>👤</Icon>
-							<Input id="name" name="name" type="text" onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)} aria-invalid={!!errors.name} />
-							<FloatingLabel htmlFor="name" $active={!!name}>Full name</FloatingLabel>
-							{errors.name && <ErrorText role="alert">{errors.name}</ErrorText>}
-						</Field>
+					{error && <Error>{error}</Error>}
+					{success && <Success>{success}</Success>}
+					<Form onSubmit={handleSubmit}>
 						<Field>
 							<Icon>✉️</Icon>
-							<Input id="email" name="email" type="email" onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} aria-invalid={!!errors.email} />
+							<Input 
+								id="email" 
+								name="email" 
+								type="email" 
+								value={email}
+								onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} 
+								required
+							/>
 							<FloatingLabel htmlFor="email" $active={!!email}>Email</FloatingLabel>
-							{errors.email && <ErrorText role="alert">{errors.email}</ErrorText>}
 						</Field>
 						<Field>
 							<Icon>🔒</Icon>
-							<Input id="password" name="password" type="password" onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} aria-invalid={!!errors.password} />
+							<Input 
+								id="password" 
+								name="password" 
+								type="password" 
+								value={password}
+								onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} 
+								required
+							/>
 							<FloatingLabel htmlFor="password" $active={!!password}>Password</FloatingLabel>
-							{errors.password && <ErrorText role="alert">{errors.password}</ErrorText>}
 						</Field>
-						<Submit type="submit">Create account</Submit>
+						<Field>
+							<Icon>🔒</Icon>
+							<Input 
+								id="confirmPassword" 
+								name="confirmPassword" 
+								type="password" 
+								value={confirmPassword}
+								onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)} 
+								required
+							/>
+							<FloatingLabel htmlFor="confirmPassword" $active={!!confirmPassword}>Confirm Password</FloatingLabel>
+						</Field>
+						<Submit type="submit" disabled={loading}>
+							{loading ? 'Creating account...' : 'Create account'}
+						</Submit>
 					</Form>
-					<LinksRow>
-						<LinkButton href="/signin">Already have an account?</LinkButton>
-					</LinksRow>
+					<GDPRText>
+						By creating an account, you agree to our Terms of Service and Privacy Policy.
+					</GDPRText>
+					<LinkButton href="/signin">Already have an account? Sign in</LinkButton>
 				</Card>
 			</Shell>
 			<Footer />
@@ -224,4 +292,4 @@ export const Signup: FC = () => {
 	);
 };
 
-export default Signup; 
+export default Signup;

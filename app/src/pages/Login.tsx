@@ -1,8 +1,10 @@
-import type { FC, FormEvent, ChangeEvent } from 'react';
+import type { FC, ChangeEvent } from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { useAuth } from '../contexts/AuthContext';
 
 const Wrapper = styled.main`
 	min-height: 100vh;
@@ -27,7 +29,7 @@ const Shell = styled.div`
 		gap: 2rem;
 	}
 	@media (min-width: 1024px) {
-		grid-template-columns: 1fr 480px; /* left illustration, right form */
+		grid-template-columns: 1fr 480px;
 	}
 `;
 
@@ -145,50 +147,68 @@ const Submit = styled.button`
 	:hover { background: #3730a3; }
 `;
 
-const LinksRow = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
-	flex-wrap: wrap;
-	@media (max-width: 380px) {
-		flex-direction: column;
-		align-items: stretch;
-		gap: 0.4rem;
-	}
-`;
-
 const LinkButton = styled.a`
 	color: #c7d2fe;
 	text-decoration: none;
 	font-weight: 600;
 	font-size: 0.95rem;
+	text-align: center;
 	:hover { text-decoration: underline; }
 `;
 
-const Trust = styled.p`
-	margin: 0.25rem 0 0 0;
-	text-align: center;
+const ForgotPasswordLink = styled.a`
+	color: #818cf8;
+	text-decoration: none;
+	font-size: 0.9rem;
+	:hover {
+		text-decoration: underline;
+	}
+`;
+
+const GDPRText = styled.p`
+	margin: 1.5rem 0 0 0;
+	font-size: 0.8rem;
 	color: #94a3b8;
+	text-align: center;
+`;
+
+const Error = styled.div`
+	background: rgba(220, 38, 38, 0.15);
+	border: 1px solid rgba(220, 38, 38, 0.3);
+	border-radius: 10px;
+	padding: 0.75rem;
+	color: #fecaca;
 	font-size: 0.9rem;
 `;
 
 export const Login: FC = () => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const [errors, setErrors] = useState<{ email?: string; password?: string }>(() => ({}));
+	const [error, setError] = useState('');
+	const [loading, setLoading] = useState(false);
+	const { signIn } = useAuth();
+	const navigate = useNavigate();
 
-	const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		const nextErrors: { email?: string; password?: string } = {};
-		if (!email.includes('@')) nextErrors.email = 'Please enter a valid email.';
-		if (password.length < 6) nextErrors.password = 'Password must be at least 6 characters.';
-		setErrors(nextErrors);
-		if (Object.keys(nextErrors).length === 0) alert('Signed in (demo)');
-	};
+		setLoading(true);
+		setError('');
 
-	const onEmail = (e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
-	const onPassword = (e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
+		try {
+			const { error: signInError } = await signIn(email, password);
+			
+			if (signInError) {
+				setError(signInError.message);
+			} else {
+				// Redirect to home page after successful login
+				navigate('/');
+			}
+		} catch (err) {
+			setError('An unexpected error occurred. Please try again.');
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	return (
 		<Wrapper>
@@ -200,27 +220,42 @@ export const Login: FC = () => {
 				</Pitch>
 				<Card>
 					<Title>Sign in</Title>
-					<Lead>Welcome back. Enter your details to continue.</Lead>
-					<Form onSubmit={onSubmit} aria-labelledby="signin-title">
+					<Lead>Enter your credentials to continue.</Lead>
+					{error && <Error>{error}</Error>}
+					<Form onSubmit={handleSubmit}>
 						<Field>
 							<Icon>✉️</Icon>
-							<Input id="email" name="email" type="email" value={email} onChange={onEmail} aria-invalid={!!errors.email} />
+							<Input 
+								id="email" 
+								name="email" 
+								type="email" 
+								value={email}
+								onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} 
+								required
+							/>
 							<FloatingLabel htmlFor="email" $active={!!email}>Email</FloatingLabel>
-							{errors.email && <ErrorText role="alert">{errors.email}</ErrorText>}
 						</Field>
 						<Field>
 							<Icon>🔒</Icon>
-							<Input id="password" name="password" type="password" value={password} onChange={onPassword} aria-invalid={!!errors.password} />
+							<Input 
+								id="password" 
+								name="password" 
+								type="password" 
+								value={password}
+								onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} 
+								required
+							/>
 							<FloatingLabel htmlFor="password" $active={!!password}>Password</FloatingLabel>
-							{errors.password && <ErrorText role="alert">{errors.password}</ErrorText>}
 						</Field>
-						<Submit type="submit">Sign in</Submit>
+						<ForgotPasswordLink href="#">Forgot password?</ForgotPasswordLink>
+						<Submit type="submit" disabled={loading}>
+							{loading ? 'Signing in...' : 'Sign in'}
+						</Submit>
 					</Form>
-					<LinksRow>
-						<LinkButton href="#">Forgot password?</LinkButton>
-						<LinkButton href="/signup">Create account</LinkButton>
-					</LinksRow>
-					<Trust>We protect your data according to GDPR and industry best practices.</Trust>
+					<GDPRText>
+						By signing in, you agree to our Terms of Service and Privacy Policy.
+					</GDPRText>
+					<LinkButton href="/signup">Don't have an account? Sign up</LinkButton>
 				</Card>
 			</Shell>
 			<Footer />
@@ -228,4 +263,4 @@ export const Login: FC = () => {
 	);
 };
 
-export default Login; 
+export default Login;
