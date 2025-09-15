@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { FC } from 'react';
 import styled from 'styled-components';
 
@@ -42,6 +43,9 @@ const NavList = styled.ul`
 	margin: 0;
 	padding: 0;
 	justify-self: center;
+	@media (max-width: 640px) {
+		display: none;
+	}
 `;
 
 const NavLink = styled.a`
@@ -80,32 +84,90 @@ const LoginButton = styled.a`
 		color: #0b1220;
 		border-color: #0b1220;
 	}
+	@media (max-width: 640px) {
+		display: none;
+	}
+`;
+
+const MenuButton = styled.button`
+	justify-self: end;
+	display: none;
+	appearance: none;
+	border: 1px solid #111827;
+	background: #ffffff;
+	color: #0b1220;
+	padding: 0.45rem 0.6rem;
+	border-radius: 10px;
+	font-weight: 600;
+	cursor: pointer;
+	:focus-visible { outline: 2px solid #1f2937; outline-offset: 2px; }
+	:hover { background: #f3f4f6; }
+	@media (max-width: 640px) {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+`;
+
+const MobileMenu = styled.div<{ $open: boolean }>`
+	position: absolute;
+	top: 100%;
+	right: 1rem;
+	background: #ffffff;
+	color: #0b1220;
+	border: 1px solid rgba(0,0,0,0.08);
+	border-radius: 12px;
+	box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+	padding: 0.5rem;
+	display: none;
+	min-width: 220px;
+	@media (max-width: 640px) {
+		display: ${p => (p.$open ? 'grid' : 'none')};
+		gap: 0.25rem;
+	}
+`;
+
+const MobileItem = styled.a`
+	text-decoration: none;
+	color: #111827;
+	padding: 0.6rem 0.75rem;
+	border-radius: 8px;
+	font-size: 0.95rem;
+	:hover, :focus-visible { background: rgba(0,0,0,0.06); outline: none; }
 `;
 
 export const Navbar: FC = () => {
+	const [open, setOpen] = useState(false);
 	return (
 		<Header>
 			<Nav aria-label="Primary">
-				<BrandLink href="/" aria-label="HirePath home">
+				<BrandLink href="/" aria-label="HirePath home" onClick={() => setOpen(false)}>
 					<BrandImg src="/logo-hirepath-wide.png" alt="HirePath" />
 				</BrandLink>
 				<NavList role="list">
 					<li>
-						<NavLink href="#features">Features</NavLink>
+						<NavLink href="/features">Features</NavLink>
 					</li>
 					<li>
 						<NavLink href="/about">About</NavLink>
 					</li>
 					<li>
-						<NavLink href="#contact">Contact</NavLink>
+						<NavLink href="/blog">Blog</NavLink>
 					</li>
 				</NavList>
-				<LoginButton href="#login" aria-label="Logg inn">
-					Logg inn
-				</LoginButton>
+				<LoginButton href="/signin" aria-label="Sign in">Sign in</LoginButton>
+				<MenuButton aria-label="Open menu" aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen(v => !v)}>
+					<span>☰</span>
+				</MenuButton>
+				<MobileMenu id="mobile-menu" role="menu" $open={open}>
+					<MobileItem href="/features" onClick={() => setOpen(false)}>Features</MobileItem>
+					<MobileItem href="/about" onClick={() => setOpen(false)}>About</MobileItem>
+					<MobileItem href="/blog" onClick={() => setOpen(false)}>Blog</MobileItem>
+					<MobileItem href="/signin" onClick={() => setOpen(false)}>Sign in</MobileItem>
+				</MobileMenu>
 			</Nav>
 		</Header>
 	);
 };
 
-export default Navbar; 
+export default Navbar;
