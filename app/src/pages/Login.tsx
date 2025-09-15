@@ -128,12 +128,6 @@ const Input = styled.input`
 	:focus-visible { outline: 2px solid #4338ca; outline-offset: 2px; }
 `;
 
-const ErrorText = styled.p`
-	margin: 0.25rem 0 0 0;
-	font-size: 0.9rem;
-	color: #ef4444;
-`;
-
 const Submit = styled.button`
 	appearance: none;
 	border: 0;
