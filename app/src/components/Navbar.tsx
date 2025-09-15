@@ -163,12 +163,17 @@ const ProfileButton = styled.a`
 
 export const Navbar: FC = () => {
 	const [open, setOpen] = useState(false);
-	const { user } = useAuth();
+	const { user, signOut } = useAuth();
 	const navigate = useNavigate();
 
 	const handleSignOut = async (e: React.MouseEvent) => {
 		e.preventDefault();
-		// Navigation will be handled by AuthContext useEffect
+		try {
+			await signOut();
+			navigate('/'); // Redirect to home page after sign out
+		} catch (error) {
+			console.error('Error signing out:', error);
+		}
 	};
 
 	return (
@@ -209,7 +214,10 @@ export const Navbar: FC = () => {
 					<MobileItem href="/about" onClick={() => setOpen(false)}>About</MobileItem>
 					<MobileItem href="/blog" onClick={() => setOpen(false)}>Blog</MobileItem>
 					{user ? (
-						<MobileItem href="/profile" onClick={() => setOpen(false)}>Profile</MobileItem>
+						<>
+							<MobileItem href="/profile" onClick={() => setOpen(false)}>Profile</MobileItem>
+							<MobileItem href="#" onClick={(e) => { handleSignOut(e); setOpen(false); }}>Sign out</MobileItem>
+						</>
 					) : (
 						<MobileItem href="/signin" onClick={() => setOpen(false)}>Sign in</MobileItem>
 					)}
