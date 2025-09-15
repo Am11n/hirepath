@@ -79,8 +79,8 @@ export const Footer: FC = () => {
 				<Row>
 					<Links aria-label="Footer links">
 						<Link href="/about">About</Link>
-						<Link href="#contact">Contact</Link>
-						<Link href="#privacy">Privacy Policy</Link>
+						<Link href="/blog">Blog</Link>
+						<Link href="/privacy">Privacy Policy</Link>
 					</Links>
 					<Socials aria-label="Social links">
 						<SocialLink href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</SocialLink>
@@ -94,4 +94,4 @@ export const Footer: FC = () => {
 	);
 };
 
-export default Footer; 
+export default Footer;

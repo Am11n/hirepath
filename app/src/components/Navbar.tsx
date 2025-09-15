@@ -152,7 +152,7 @@ export const Navbar: FC = () => {
 						<NavLink href="/about">About</NavLink>
 					</li>
 					<li>
-						<NavLink href="#contact">Contact</NavLink>
+						<NavLink href="/blog">Blog</NavLink>
 					</li>
 				</NavList>
 				<LoginButton href="/signin" aria-label="Sign in">Sign in</LoginButton>
@@ -162,7 +162,7 @@ export const Navbar: FC = () => {
 				<MobileMenu id="mobile-menu" role="menu" $open={open}>
 					<MobileItem href="/features" onClick={() => setOpen(false)}>Features</MobileItem>
 					<MobileItem href="/about" onClick={() => setOpen(false)}>About</MobileItem>
-					<MobileItem href="#contact" onClick={() => setOpen(false)}>Contact</MobileItem>
+					<MobileItem href="/blog" onClick={() => setOpen(false)}>Blog</MobileItem>
 					<MobileItem href="/signin" onClick={() => setOpen(false)}>Sign in</MobileItem>
 				</MobileMenu>
 			</Nav>
@@ -170,4 +170,4 @@ export const Navbar: FC = () => {
 	);
 };
 
-export default Navbar; 
+export default Navbar;
