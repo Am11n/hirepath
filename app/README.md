@@ -41,10 +41,12 @@ app/
     main.tsx                 # App bootstrap
     index.css                # Global resets and root sizing
     App.tsx                  # Renders Home page
-    pages/Home.tsx           # Hero section (video) + challenges grid
+    pages/Home.tsx           # Hero section (video) + features + showcase
+    pages/About.tsx          # About page content
     components/
       Navbar.tsx             # White navbar, logo image, outline login button
-      ChallengeCard.tsx      # Reusable challenge card component
+      Footer.tsx             # Footer with links and social
+      ChallengeCard.tsx      # (not used on Home now, kept for reuse)
   public/
     logo-hirepath-wide.png   # Wide brand logo used in navbar
     logo-utentekst.png       # Icon-only logo used as favicon
@@ -76,14 +78,40 @@ To change the logo:
 To change the video:
 - Place your file at `app/public/videos/hero.mp4` (or update the `src` in `Home.tsx`).
 
-### Challenges Grid
-- Three example cards with image placeholders and participant counts.
-- Update titles, counts, and images in `Home.tsx`.
-- Provide card images in `app/public/images/` and reference with absolute paths (e.g., `/images/landing.jpg`).
+### Features & Showcase
+- Features: Five feature cards rendered from a simple array in `Home.tsx`.
+- Showcase: Laptop-style frame. Place a screenshot at `/public/showcase/app-home.png`.
 
 ### Favicon & Tab Title
 - Favicon: `app/public/logo-utentekst.png` (square icon recommended for sharpness).
 - Tab title: managed in `app/index.html`.
+
+### Deployment (Vercel) — Monorepo root points to `app/`
+Vercel by default looks for `package.json` at the repository root. This project lives under `app/`, so set the root directory in Vercel:
+
+1) Project Settings → General
+- Root Directory: `app`
+
+2) Project Settings → Build & Development Settings
+- Framework Preset: `Vite`
+- Install Command: `pnpm install`
+- Build Command: `pnpm run build`
+- Output Directory: `dist`
+
+3) Redeploy the project.
+
+Optional (CLI deploy from subfolder):
+```bash
+cd app
+vercel --prod
+```
+
+Optional (SPA fallback for React Router): Vercel’s Vite preset generally handles SPA routing. If needed, add a `vercel.json` at `app/` with:
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+}
+```
 
 ### Scripts
 - `pnpm run lint` — run ESLint on the codebase
@@ -91,9 +119,10 @@ To change the video:
 - `pnpm run preview` — preview the built app locally
 
 ### Troubleshooting
-- Images not showing: ensure assets exist under `app/public/...` and paths in code begin with `/`.
-- Video not playing: verify `app/public/videos/hero.mp4` exists and that the browser supports MP4 (H.264/AAC).
-- Styles not applied: ensure styled-components is installed and components are imported correctly.
+- “Failed to locate package.json”: Ensure Vercel Root Directory is set to `app/`.
+- Images not showing: place assets under `app/public/...` and reference with `/...` paths.
+- Video not playing: verify `app/public/videos/hero.mp4` exists and browser supports MP4 (H.264/AAC).
+- SPA routing: if direct links to routes 404, add the optional `vercel.json` rewrite above.
 
 ### Development Guidelines
 - Keep components small and focused; extract UI into reusable pieces when they exceed ~150 lines.

@@ -98,6 +98,26 @@ const PrimaryButton = styled.a`
 	}
 `;
 
+const Intro = styled.section`
+	padding: 2rem 0 1rem 0;
+	display: grid;
+	gap: 0.5rem;
+`;
+
+const IntroTitle = styled.h2`
+	margin: 0;
+	font-size: clamp(1.5rem, 3.2vw, 2rem);
+	font-weight: 800;
+`;
+
+const IntroText = styled.p`
+	margin: 0;
+	max-width: 70ch;
+	color: #cbd5e1;
+	font-size: 1.05rem;
+	line-height: 1.6;
+`;
+
 const FeaturesSection = styled.section`
 	padding: 3rem 0 1rem 0;
 `;
@@ -226,11 +246,11 @@ const BottomButton = styled.a`
 
 export const Home: FC = () => {
 	const features = [
-		{ icon: '📋', title: 'Kanban Board', desc: 'Dra og slipp søknader mellom statuser.' },
-		{ icon: '⏰', title: 'Reminders', desc: 'Få varsler før intervjuer og deadlines.' },
-		{ icon: '📄', title: 'Document Upload', desc: 'Lagre CV og søknadsbrev.' },
-		{ icon: '🔍', title: 'Search & Filters', desc: 'Finn søknader raskt.' },
-		{ icon: '📊', title: 'Insights', desc: 'Se statistikk og progresjon.' },
+		{ icon: '📋', title: 'Kanban Board', desc: 'Drag and drop applications between stages.' },
+		{ icon: '⏰', title: 'Reminders', desc: 'Get alerts before interviews and deadlines.' },
+		{ icon: '📄', title: 'Document Upload', desc: 'Store your resume and cover letters.' },
+		{ icon: '🔍', title: 'Search & Filters', desc: 'Find applications quickly.' },
+		{ icon: '📊', title: 'Insights', desc: 'See stats and progress.' },
 	];
 
 	const showcaseSrc = '/showcase/app-home.png';
@@ -250,7 +270,7 @@ export const Home: FC = () => {
 						<Heading id="hero-title">Stay on top of your job applications with ease.</Heading>
 						<Subheading id="hero-desc">Organize applications, track activities, upload documents, and never miss a deadline.</Subheading>
 						<CTA>
-							<PrimaryButton href="#features" aria-label="Get Started">
+							<PrimaryButton href="/features" aria-label="Get Started">
 								Get Started
 							</PrimaryButton>
 						</CTA>
@@ -258,6 +278,12 @@ export const Home: FC = () => {
 				</HeroContent>
 			</Hero>
 			<Container>
+				<Intro aria-labelledby="intro-title">
+					<IntroTitle id="intro-title">Your clear path from application to job.</IntroTitle>
+					<IntroText>
+						Tired of messy spreadsheets and scattered documents? HirePath helps you track applications, organize tasks, and manage CVs and cover letters — all in one simple dashboard. From the first application to your next job offer, HirePath gives you structure, clarity, and confidence every step of the way.
+					</IntroText>
+				</Intro>
 				<FeaturesSection id="features" aria-label="Key features">
 					<FeaturesGrid>
 						{features.map((f) => (
@@ -275,7 +301,7 @@ export const Home: FC = () => {
 					<LaptopFrame>
 						<Screen>
 							<img src={showcaseSrc} alt="App screenshot" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-							<Placeholder>Legg til et skjermbilde i /public/showcase/app-home.png</Placeholder>
+							<Placeholder>Add a screenshot at /public/showcase/app-home.png</Placeholder>
 						</Screen>
 					</LaptopFrame>
 				</ShowcaseSection>
@@ -284,7 +310,7 @@ export const Home: FC = () => {
 			<BottomCTA aria-labelledby="cta-bottom-title">
 				<BottomCTAInner>
 					<BottomHeading id="cta-bottom-title">Ready to organize your job search?</BottomHeading>
-					<BottomButton href="#" aria-label="Create Your Free Account">Create Your Free Account</BottomButton>
+					<BottomButton href="/signup" aria-label="Create Your Free Account">Create Your Free Account</BottomButton>
 				</BottomCTAInner>
 			</BottomCTA>
 

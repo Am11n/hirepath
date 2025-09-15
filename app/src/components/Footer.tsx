@@ -41,7 +41,7 @@ const Link = styled.a`
 `;
 
 const Tagline = styled.p`
-	margin: 0.5rem 0 0 0;
+	margin: 0.25rem 0 0 0;
 	font-size: 0.95rem;
 	color: #94a3b8;
 `;
@@ -66,6 +66,12 @@ const SocialLink = styled.a`
 	:hover { background: #1f2937; }
 `;
 
+const Copyright = styled.p`
+	margin: 0.25rem 0 0 0;
+	font-size: 0.85rem;
+	color: #64748b;
+`;
+
 export const Footer: FC = () => {
 	return (
 		<Wrapper>
@@ -82,6 +88,7 @@ export const Footer: FC = () => {
 					</Socials>
 				</Row>
 				<Tagline>HirePath – Your clear path from application to job.</Tagline>
+				<Copyright>© {new Date().getFullYear()} HirePath. All rights reserved.</Copyright>
 			</Inner>
 		</Wrapper>
 	);
