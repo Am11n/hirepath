@@ -1,17 +1,10 @@
 import type { User } from '@supabase/supabase-js'
 import type { FC, ReactNode } from 'react'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-
-interface AuthContextType {
-  user: User | null
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  signOut: () => Promise<{ error: Error | null }>
-  loading: boolean
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+import { setupAuthListener } from '../lib/authHelpers'
+import type { AuthContextType } from './auth-context'
+import { AuthContext } from './auth-context'
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
@@ -25,12 +18,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
       setLoading(false)
       
       // Listen for auth changes
-      const { data: { subscription } } = await supabase.auth.onAuthStateChange(
-        (_event, session) => {
-          setUser(session?.user || null)
-          setLoading(false)
-        }
-      )
+      const { data: { subscription } } = setupAuthListener(setUser, setLoading)
       
       return () => {
         subscription.unsubscribe()
@@ -63,7 +51,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     return { error }
   }
 
-  const value = {
+  const value: AuthContextType = {
     user,
     signUp,
     signIn,
@@ -76,12 +64,4 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   )
-}
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
 }

@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import styled from 'styled-components';
-import { Navbar } from '../components/Navbar';
+import { PublicNavbar } from '../components/PublicNavbar';
 import { Footer } from '../components/Footer';
 
 const Page = styled.main`
@@ -257,7 +257,7 @@ export const Home: FC = () => {
 
 	return (
 		<Page>
-			<Navbar />
+			<PublicNavbar />
 			<Hero aria-labelledby="hero-title" aria-describedby="hero-desc">
 				<HeroMedia aria-hidden="true">
 					<Video autoPlay muted loop playsInline preload="metadata" poster="/hero.jpg">

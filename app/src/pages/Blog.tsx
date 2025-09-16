@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
-import { Navbar } from '../components/Navbar';
+import { PublicNavbar } from '../components/PublicNavbar';
 import { Footer } from '../components/Footer';
 
 const Page = styled.main`
@@ -262,7 +262,7 @@ export const Blog: FC = () => {
 
 	return (
 		<Page>
-			<Navbar />
+			<PublicNavbar />
 			<Container>
 				<HeroSection>
 					<HeroTitle>Blog</HeroTitle>
