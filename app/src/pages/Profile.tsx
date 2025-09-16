@@ -1,266 +1,202 @@
 import type { FC } from 'react';
-import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabaseClient';
 
-const Page = styled.main`
-	min-height: 100vh;
-	background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
-	color: #ffffff;
-	display: flex;
-	flex-direction: column;
+const ProfileContainer = styled.div`
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
-const Container = styled.div`
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 2rem 1rem 3rem 1rem;
+const Header = styled.h1`
+  color: ${props => props.theme.colors.headings};
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
 `;
 
-const Heading = styled.h1`
-	margin: 0 0 1.5rem 0;
-	font-size: 1.8rem;
-	font-weight: 700;
+const Section = styled.div`
+  background-color: ${props => props.theme.colors.cardSurface};
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
-const Card = styled.div`
-	background: rgba(255, 255, 255, 0.06);
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 16px;
-	padding: 2rem;
-	margin-bottom: 2rem;
+const SectionHeader = styled.h2`
+  color: ${props => props.theme.colors.headings};
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+`;
+
+const Form = styled.form`
+  display: grid;
+  gap: 1.5rem;
 `;
 
 const FormGroup = styled.div`
-	display: grid;
-	gap: 0.5rem;
-	margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 `;
 
 const Label = styled.label`
-	font-size: 0.95rem;
-	font-weight: 500;
-	color: #e5e7eb;
+  color: ${props => props.theme.colors.bodyText};
+  font-size: 0.9rem;
+  font-weight: 500;
 `;
 
 const Input = styled.input`
-	background: rgba(15, 23, 42, 0.8);
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 10px;
-	padding: 0.75rem 1rem;
-	color: #ffffff;
-	font-size: 1rem;
-	width: 100%;
-	:focus {
-		outline: 2px solid #818cf8;
-		outline-offset: 2px;
-		border-color: #818cf8;
-	}
+  background-color: rgba(255, 255, 255, 0.05);
+  color: ${props => props.theme.colors.headings};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  
+  &:focus {
+    outline: 2px solid ${props => props.theme.colors.primary};
+    outline-offset: 2px;
+    border-color: ${props => props.theme.colors.primary};
+  }
 `;
 
 const Button = styled.button`
-	background: #4338ca;
-	color: white;
-	border: none;
-	border-radius: 10px;
-	padding: 0.75rem 1rem;
-	font-size: 1rem;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background-color 0.2s ease;
-	:focus-visible {
-		outline: 2px solid #a5b4fc;
-		outline-offset: 2px;
-	}
-	:hover {
-		background: #3730a3;
-	}
+  background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+  
+  &:hover {
+    box-shadow: 0 0 0 2px ${props => props.theme.colors.primary}, 0 8px 24px rgba(0,0,0,.35);
+  }
+  
+  &:focus {
+    outline: 2px solid ${props => props.theme.colors.primary};
+    outline-offset: 2px;
+  }
 `;
 
-const UserInfo = styled.div`
-	display: grid;
-	gap: 0.5rem;
+const DangerButton = styled.button`
+  background: ${props => props.theme.colors.error};
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #dc2626;
+    box-shadow: 0 0 0 2px ${props => props.theme.colors.error}, 0 8px 24px rgba(0,0,0,.35);
+  }
+  
+  &:focus {
+    outline: 2px solid ${props => props.theme.colors.error};
+    outline-offset: 2px;
+  }
 `;
 
-const UserEmail = styled.p`
-	color: #cbd5e1;
-	font-size: 1rem;
-`;
-
-const ErrorMessage = styled.div`
-	background: rgba(220, 38, 38, 0.15);
-	border: 1px solid rgba(220, 38, 38, 0.3);
-	border-radius: 10px;
-	padding: 0.75rem;
-	color: #fecaca;
-	font-size: 0.9rem;
-	margin-bottom: 1rem;
-`;
-
-const SuccessMessage = styled.div`
-	background: rgba(16, 185, 129, 0.15);
-	border: 1px solid rgba(16, 185, 129, 0.3);
-	border-radius: 10px;
-	padding: 0.75rem;
-	color: #6ee7b7;
-	font-size: 0.9rem;
-	margin-bottom: 1rem;
+const DescriptionText = styled.p`
+  color: ${props => props.theme.colors.bodyText};
+  margin-bottom: 1.5rem;
 `;
 
 export const Profile: FC = () => {
-	const { user, signOut } = useAuth();
-	const [loading, setLoading] = useState(true);
-	const [updating, setUpdating] = useState(false);
-	const [error, setError] = useState('');
-	const [success, setSuccess] = useState('');
-	const [fullName, setFullName] = useState('');
-	const [company, setCompany] = useState('');
-
-	useEffect(() => {
-		const fetchProfile = async () => {
-			if (user) {
-				try {
-					const { data, error } = await supabase
-						.from('profiles')
-						.select('full_name, company')
-						.eq('id', user.id)
-						.single();
-
-					if (error && error.code !== 'PGRST116') {
-						throw error;
-					}
-
-					if (data) {
-						setFullName(data.full_name || '');
-						setCompany(data.company || '');
-					}
-				} catch (err) {
-					console.error('Error fetching profile:', err);
-					setError('Failed to load profile data');
-				} finally {
-					setLoading(false);
-				}
-			}
-		};
-
-		fetchProfile();
-	}, [user]);
-
-	const handleUpdateProfile = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setUpdating(true);
-		setError('');
-		setSuccess('');
-
-		try {
-			const { error } = await supabase
-				.from('profiles')
-				.upsert({
-					id: user?.id,
-					full_name: fullName,
-					company: company,
-					updated_at: new Date(),
-				});
-
-			if (error) throw error;
-
-			setSuccess('Profile updated successfully!');
-		} catch (err) {
-			console.error('Error updating profile:', err);
-			setError('Failed to update profile');
-		} finally {
-			setUpdating(false);
-		}
-	};
-
-	const handleSignOut = async () => {
-		try {
-			await signOut();
-		} catch (err) {
-			console.error('Error signing out:', err);
-			setError('Failed to sign out');
-		}
-	};
-
-	if (loading) {
-		return (
-			<Page>
-				<Navbar />
-				<Container>
-					<Heading>Loading profile...</Heading>
-				</Container>
-				<Footer />
-			</Page>
-		);
-	}
-
-	return (
-		<Page>
-			<Navbar />
-			<Container>
-				<Heading>Profile</Heading>
-				
-				{error && <ErrorMessage>{error}</ErrorMessage>}
-				{success && <SuccessMessage>{success}</SuccessMessage>}
-				
-				<Card>
-					<UserInfo>
-						<Label>Email</Label>
-						<UserEmail>{user?.email}</UserEmail>
-					</UserInfo>
-				</Card>
-				
-				<Card>
-					<Heading as="h2" style={{ fontSize: '1.4rem', marginBottom: '1rem' }}>
-						Profile Information
-					</Heading>
-					<form onSubmit={handleUpdateProfile}>
-						<FormGroup>
-							<Label htmlFor="fullName">Full Name</Label>
-							<Input
-								id="fullName"
-								type="text"
-								value={fullName}
-								onChange={(e) => setFullName(e.target.value)}
-								placeholder="Your full name"
-							/>
-						</FormGroup>
-						<FormGroup>
-							<Label htmlFor="company">Company</Label>
-							<Input
-								id="company"
-								type="text"
-								value={company}
-								onChange={(e) => setCompany(e.target.value)}
-								placeholder="Your company"
-							/>
-						</FormGroup>
-						<Button type="submit" disabled={updating}>
-							{updating ? 'Updating...' : 'Update Profile'}
-						</Button>
-					</form>
-				</Card>
-				
-				<Card>
-					<Heading as="h2" style={{ fontSize: '1.4rem', marginBottom: '1rem' }}>
-						Account Settings
-					</Heading>
-					<Button 
-						onClick={handleSignOut}
-						style={{ background: '#dc2626' }}
-						onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
-						onMouseOut={(e) => e.currentTarget.style.background = '#dc2626'}
-					>
-						Sign Out
-					</Button>
-				</Card>
-			</Container>
-			<Footer />
-		</Page>
-	);
+  return (
+    <ProfileContainer>
+      <Header>Profile</Header>
+      
+      <Section>
+        <SectionHeader>Account Information</SectionHeader>
+        <Form>
+          <FormGroup>
+            <Label htmlFor="name">Full Name</Label>
+            <Input type="text" id="name" placeholder="Enter your full name" />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="email">Email Address</Label>
+            <Input type="email" id="email" placeholder="Enter your email" />
+          </FormGroup>
+          
+          <Button type="submit">Save Changes</Button>
+        </Form>
+      </Section>
+      
+      <Section>
+        <SectionHeader>Notifications</SectionHeader>
+        <Form>
+          <FormGroup>
+            <Label>
+              <Input type="checkbox" /> Email notifications for new applications
+            </Label>
+          </FormGroup>
+          
+          <FormGroup>
+            <Label>
+              <Input type="checkbox" /> Email notifications for interview reminders
+            </Label>
+          </FormGroup>
+          
+          <FormGroup>
+            <Label>
+              <Input type="checkbox" /> Email notifications for document updates
+            </Label>
+          </FormGroup>
+          
+          <Button type="submit">Save Preferences</Button>
+        </Form>
+      </Section>
+      
+      <Section>
+        <SectionHeader>Security</SectionHeader>
+        <Form>
+          <FormGroup>
+            <Label htmlFor="current-password">Current Password</Label>
+            <Input type="password" id="current-password" placeholder="Enter current password" />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="new-password">New Password</Label>
+            <Input type="password" id="new-password" placeholder="Enter new password" />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Input type="password" id="confirm-password" placeholder="Confirm new password" />
+          </FormGroup>
+          
+          <Button type="submit">Update Password</Button>
+        </Form>
+      </Section>
+      
+      <Section>
+        <SectionHeader>Danger Zone</SectionHeader>
+        <DescriptionText>
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </DescriptionText>
+        <DangerButton>Delete Account</DangerButton>
+      </Section>
+    </ProfileContainer>
+  );
 };
 
 export default Profile;

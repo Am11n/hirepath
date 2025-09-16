@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import styled from 'styled-components';
-import { Navbar } from '../components/Navbar';
+import { PublicNavbar } from '../components/PublicNavbar';
 import { Footer } from '../components/Footer';
 
 const Wrapper = styled.main`
@@ -58,7 +58,7 @@ const List = styled.ul`
 export const About: FC = () => {
 	return (
 		<Wrapper>
-			<Navbar />
+			<PublicNavbar />
 			<Container>
 				<Title>About HirePath</Title>
 				<Lead>Your clear path from application to job</Lead>

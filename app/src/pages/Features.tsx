@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Navbar } from '../components/Navbar';
+import { PublicNavbar } from '../components/PublicNavbar';
 import { Footer } from '../components/Footer';
 
 const Wrapper = styled.main`
@@ -126,7 +126,7 @@ export const Features: FC = () => {
 
 	return (
 		<Wrapper>
-			<Navbar />
+			<PublicNavbar />
 			<Container>
 				<Intro>
 					<Title>Powerful features to streamline your job search</Title>

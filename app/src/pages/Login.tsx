@@ -1,260 +1,315 @@
-import type { FC, ChangeEvent } from 'react';
+import type { FC } from 'react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { PublicNavbar } from '../components/PublicNavbar';
 
-const Wrapper = styled.main`
-	min-height: 100vh;
-	background: radial-gradient(60% 80% at 20% 20%, rgba(67,56,202,0.25) 0%, rgba(15,23,42,0.0) 60%),
-		linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
-	color: #ffffff;
-	display: flex;
-	flex-direction: column;
+const PageContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 `;
 
-const Shell = styled.div`
-	max-width: 1100px;
-	margin: 0 auto;
-	padding: calc(4rem + env(safe-area-inset-top)) 0.75rem calc(2.25rem + env(safe-area-inset-bottom)) 0.75rem;
-	flex: 1 0 auto;
-	display: grid;
-	gap: 1.5rem;
-	grid-template-columns: 1fr;
-	align-items: center;
-	@media (min-width: 640px) {
-		padding: 5rem 1rem 3rem 1rem;
-		gap: 2rem;
-	}
-	@media (min-width: 1024px) {
-		grid-template-columns: 1fr 480px;
-	}
+const ContentWrapper = styled.div`
+  display: flex;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    padding: 1rem;
+  }
 `;
 
-const Pitch = styled.section`
-	display: none;
-	@media (min-width: 1024px) {
-		display: grid;
-		gap: 0.75rem;
-		align-content: center;
-	}
+const HeroSection = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 2rem;
+  color: white;
+  max-width: 50%;
+  align-items: center;
+  text-align: center;
+  
+  @media (max-width: 768px) {
+    padding-right: 0;
+    padding-bottom: 2rem;
+    max-width: 100%;
+  }
 `;
 
-const PitchTitle = styled.h1`
-	margin: 0;
-	font-size: clamp(1.8rem, 3.5vw, 2.6rem);
-	font-weight: 800;
+const HeroTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
-const PitchText = styled.p`
-	margin: 0;
-	color: #cbd5e1;
-	max-width: 52ch;
+const HeroDescription = styled.p`
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 500px;
+  opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const FormContainer = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 50%;
+  
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
 `;
 
 const Card = styled.div`
-	margin: 0 auto;
-	width: 100%;
-	max-width: min(480px, calc(100vw - 2rem));
-	box-sizing: border-box;
-	background: #0f1a33;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 16px;
-	box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-	padding: 1.25rem;
-	display: grid;
-	gap: 1rem;
-	@media (min-width: 640px) {
-		padding: 1.5rem;
-		max-width: 480px;
-	}
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  
+  @media (min-width: 768px) {
+    padding: 3rem;
+  }
 `;
 
 const Title = styled.h2`
-	margin: 0;
-	font-size: clamp(1.6rem, 3vw, 2rem);
-	font-weight: 800;
-	text-align: center;
-`;
-
-const Lead = styled.p`
-	margin: 0;
-	color: #cbd5e1;
-	text-align: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.5rem;
 `;
 
 const Form = styled.form`
-	display: grid;
-	gap: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 `;
 
-const Field = styled.div`
-	position: relative;
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 `;
 
-const Icon = styled.span`
-	position: absolute;
-	left: 12px;
-	top: 50%;
-	transform: translateY(-50%);
-	font-size: 14px;
-	color: #94a3b8;
-	pointer-events: none;
-`;
-
-const FloatingLabel = styled.label<{ $active: boolean }>`
-	position: absolute;
-	left: 36px;
-	top: ${p => (p.$active ? '6px' : '50%')};
-	transform: translateY(${p => (p.$active ? '0' : '-50%')});
-	font-size: ${p => (p.$active ? '11px' : '14px')};
-	color: #94a3b8;
-	transition: all 0.15s ease;
-	pointer-events: none;
+const Label = styled.label`
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
 `;
 
 const Input = styled.input`
-	box-sizing: border-box;
-	max-width: 100%;
-	width: 100%;
-	padding: 0.9rem 0.8rem 0.7rem 36px;
-	border-radius: 12px;
-	border: 1px solid rgba(255,255,255,0.15);
-	background: #0b1220;
-	color: #e5e7eb;
-	font-size: 16px;
-	:focus-visible { outline: 2px solid #4338ca; outline-offset: 2px; }
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  color: white;
+  font-size: 1rem;
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  }
 `;
 
-const Submit = styled.button`
-	appearance: none;
-	border: 0;
-	border-radius: 12px;
-	padding: 0.9rem 1rem;
-	background: #4338ca;
-	color: #ffffff;
-	font-weight: 700;
-	cursor: pointer;
-	:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
-	:hover { background: #3730a3; }
+const Button = styled.button`
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
 `;
 
-const LinkButton = styled.a`
-	color: #c7d2fe;
-	text-decoration: none;
-	font-weight: 600;
-	font-size: 0.95rem;
-	text-align: center;
-	:hover { text-decoration: underline; }
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  span {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+  }
+`;
+
+const FooterText = styled.p`
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  text-align: center;
+  margin: 1.5rem 0 0;
+`;
+
+const FooterLink = styled(Link)`
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const ErrorText = styled.p`
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  text-align: center;
+  margin: 0;
 `;
 
 const ForgotPasswordLink = styled.a`
-	color: #818cf8;
-	text-decoration: none;
-	font-size: 0.9rem;
-	:hover {
-		text-decoration: underline;
-	}
-`;
-
-const GDPRText = styled.p`
-	margin: 1.5rem 0 0 0;
-	font-size: 0.8rem;
-	color: #94a3b8;
-	text-align: center;
-`;
-
-const Error = styled.div`
-	background: rgba(220, 38, 38, 0.15);
-	border: 1px solid rgba(220, 38, 38, 0.3);
-	border-radius: 10px;
-	padding: 0.75rem;
-	color: #fecaca;
-	font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.9rem;
+  text-align: right;
+  margin-top: 0.25rem;
+  
+  &:hover {
+    color: white;
+    text-decoration: underline;
+  }
 `;
 
 export const Login: FC = () => {
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const [error, setError] = useState('');
-	const [loading, setLoading] = useState(false);
-	const { signIn } = useAuth();
-	const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setLoading(true);
-		setError('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      setError('');
+      
+      await signIn(email, password);
+      navigate('/dashboard');
+    } catch (error) {
+      // Type guard to check if error is an Error object
+      if (error instanceof Error) {
+        setError(error.message || 'Failed to sign in');
+      } else {
+        setError('Failed to sign in');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-		try {
-			const { error: signInError } = await signIn(email, password);
-			
-			if (signInError) {
-				setError(signInError.message);
-			} else {
-				// Redirect to home page after successful login
-				navigate('/');
-			}
-		} catch (err) {
-			setError('An unexpected error occurred. Please try again.');
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	return (
-		<Wrapper>
-			<Navbar />
-			<Shell>
-				<Pitch>
-					<PitchTitle>Your job search, organized.</PitchTitle>
-					<PitchText>Move fast with reminders, documents, and a simple board that shows exactly where every application stands.</PitchText>
-				</Pitch>
-				<Card>
-					<Title>Sign in</Title>
-					<Lead>Enter your credentials to continue.</Lead>
-					{error && <Error>{error}</Error>}
-					<Form onSubmit={handleSubmit}>
-						<Field>
-							<Icon>✉️</Icon>
-							<Input 
-								id="email" 
-								name="email" 
-								type="email" 
-								value={email}
-								onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} 
-								required
-							/>
-							<FloatingLabel htmlFor="email" $active={!!email}>Email</FloatingLabel>
-						</Field>
-						<Field>
-							<Icon>🔒</Icon>
-							<Input 
-								id="password" 
-								name="password" 
-								type="password" 
-								value={password}
-								onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} 
-								required
-							/>
-							<FloatingLabel htmlFor="password" $active={!!password}>Password</FloatingLabel>
-						</Field>
-						<ForgotPasswordLink href="#">Forgot password?</ForgotPasswordLink>
-						<Submit type="submit" disabled={loading}>
-							{loading ? 'Signing in...' : 'Sign in'}
-						</Submit>
-					</Form>
-					<GDPRText>
-						By signing in, you agree to our Terms of Service and Privacy Policy.
-					</GDPRText>
-					<LinkButton href="/signup">Don't have an account? Sign up</LinkButton>
-				</Card>
-			</Shell>
-			<Footer />
-		</Wrapper>
-	);
+  return (
+    <PageContainer>
+      <PublicNavbar />
+      <ContentWrapper>
+        <HeroSection>
+          <HeroTitle>Your job search, organized.</HeroTitle>
+          <HeroDescription>Move fast with reminders, documents, and a simple board that shows exactly where every application stands.</HeroDescription>
+        </HeroSection>
+        <FormContainer>
+          <Card>
+            <Title>Sign in</Title>
+        
+        {error && <ErrorText>{error}</ErrorText>}
+        
+        <Form onSubmit={handleSubmit}>
+          <FormGroup>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+            <ForgotPasswordLink href="#">Forgot password?</ForgotPasswordLink>
+          </FormGroup>
+          
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign in'}
+          </Button>
+        </Form>
+        
+        <Divider>
+          <span>or</span>
+        </Divider>
+        
+        <FooterText>
+          Don't have an account? <FooterLink to="/signup">Create account</FooterLink>
+        </FooterText>
+        
+        <FooterText style={{ fontSize: '0.8rem', marginTop: '1rem' }}>
+          We protect your data according to GDPR and industry best practices.
+        </FooterText>
+      </Card>
+    </FormContainer>
+  </ContentWrapper>
+</PageContainer>
+  );
 };
 
 export default Login;
