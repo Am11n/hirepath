@@ -49,9 +49,12 @@ app/
     main.tsx                 # App bootstrap
     index.css                # Global resets and root sizing
     App.tsx                  # Renders Home page
-    pages/Home.tsx           # Hero section (video) + challenges grid
+    pages/
+      Home.tsx               # Hero section (video) + challenges grid
+      Dashboard.tsx          # User dashboard with KPI cards, charts, and insights
     components/
-      Navbar.tsx             # White navbar, logo image, outline login button
+      Navbar.tsx             # Navbar for authenticated users with blue icons
+      PublicNavbar.tsx       # White navbar for public pages, logo image, outline login button
       ChallengeCard.tsx      # Reusable challenge card component
   public/
     logo-hirepath-wide.png   # Wide brand logo used in navbar
@@ -197,9 +200,10 @@ create policy "Users can delete their own documents."
 - Linting: run `pnpm run lint` before committing. Build must pass.
 
 ### Navbar
-- Background: off-white `#FAFAFA` to match brand background.
+- Background: off-white `#FAFAFA` for public pages, dark theme for authenticated dashboard.
 - Brand: image only, sourced from `/logo-hirepath-wide.png` (height set in `Navbar.tsx`).
-- Login button: outline variant (white background, dark border/text).
+- Login button: outline variant (white background, dark border/text) for public pages.
+- Authenticated navbar: Blue-colored icons for better visual consistency.
 
 To change the logo:
 - Replace `app/public/logo-hirepath-wide.png` with your asset (same filename), or
@@ -213,6 +217,12 @@ To change the logo:
 
 To change the video:
 - Place your file at `app/public/videos/hero.mp4` (or update the `src` in `Home.tsx`).
+
+### Dashboard
+- KPI Cards with blue-colored SVG icons for better visual appeal.
+- Interactive charts with tooltips and benchmark lines.
+- Insights panels with color-coded status indicators.
+- Recent activity feed with blue-colored icons.
 
 ### Challenges Grid
 - Three example cards with image placeholders and participant counts.
@@ -238,6 +248,12 @@ To change the video:
 - Prefer clarity over cleverness; explicit names and simple control flow.
 - Avoid introducing new libraries unless necessary.
 - Run `pnpm run lint` and `pnpm run build` before committing.
+
+### Recent Improvements
+- Updated KPI icons to be blue-colored and visually consistent
+- Enhanced chart icons with better design and thicker strokes
+- Added blue-colored bell icon in the authenticated navbar
+- Improved visual design of dashboard components
 
 ### License
 This project is licensed under the MIT License. See `LICENSE` for details.

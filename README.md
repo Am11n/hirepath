@@ -1,7 +1,7 @@
 # 🚀 HirePath – Din klare vei fra søknad til jobb
 
 HirePath er en moderne, mobilvennlig applikasjon for å spore jobbsøknader.  
-Den gir deg full kontroll på søknadsprosessen – fra “Draft” til “Offer” – og hjelper deg å følge opp intervjuer, aktiviteter og dokumenter.  
+Den gir deg full kontroll på søknadsprosessen – fra "Draft" til "Offer" – og hjelper deg å følge opp intervjuer, aktiviteter og dokumenter.  
 
 Applikasjonen er bygget som et moderne React-prosjekt med **React 19**, **TypeScript**, **Vite 7**, **styled-components 6** og **Supabase** (Auth, Postgres, Storage, Edge Functions).  
 Deploy skjer via **Vercel** for enkel CI/CD.
@@ -37,7 +37,7 @@ Deploy skjer via **Vercel** for enkel CI/CD.
 
 HirePath er designet i en **Playful Startup-stil** inspirert av Notion/Airtable, med runde kort, myke farger og et lett uttrykk.
 
-- **Homepage** – Introduksjon med “hero” og call-to-action  
+- **Homepage** – Introduksjon med "hero" og call-to-action  
 - **Dashboard** – Oversikt og Kanban  
 - **Application detail** – Tabs for søknadsinfo, aktiviteter og dokumenter  
 - **Tasks** – Oppgaveliste på tvers av søknader  
@@ -95,58 +95,67 @@ HirePath er designet i en **Playful Startup-stil** inspirert av Notion/Airtable,
 ```bash
 git clone git@github.com:<ditt-brukernavn>/hirepath.git
 cd hirepath
-2. Installer avhengigheter
-bash
-Copy code
-pnpm install
-3. Sett opp miljøvariabler
-Opprett .env.local:
+```
 
-env
-Copy code
+### 2. Installer avhengigheter
+```bash
+pnpm install
+```
+
+### 3. Sett opp miljøvariabler
+Opprett `.env.local`:
+
+```env
 VITE_SUPABASE_URL=<din-supabase-url>
 VITE_SUPABASE_ANON_KEY=<din-anon-key>
-Merk: med React + Vite må variabler prefikses med VITE_ for å være tilgjengelige i koden.
+```
 
-4. Kjør lokalt
-bash
-Copy code
+Merk: med React + Vite må variabler prefikses med `VITE_` for å være tilgjengelige i koden.
+
+### 4. Kjør lokalt
+```bash
 pnpm dev
+```
 Åpne http://localhost:5173 i nettleseren.
 
-🔒 Sikkerhet
-Strenge Row Level Security policies i Supabase sikrer at hver bruker bare får tilgang til egne data.
+---
 
-Alle dokumenter lagres i en privat bucket og lastes kun ned via signerte URL-er.
+## 🔒 Sikkerhet
 
-Rate limiting på skrive-actions forhindrer misbruk.
+- Strenge Row Level Security policies i Supabase sikrer at hver bruker bare får tilgang til egne data.
+- Alle dokumenter lagres i en privat bucket og lastes kun ned via signerte URL-er.
+- Rate limiting på skrive-actions forhindrer misbruk.
 
-✅ Status
- Autentisering med Supabase
+---
 
- Kanban med CRUD
+## ✅ Status
 
- Aktiviteter med varsler
+- [x] Autentisering med Supabase
+- [x] Kanban med CRUD
+- [x] Aktiviteter med varsler
+- [x] Dokumentopplasting og nedlasting
+- [x] CSV-eksport
+- [x] KPI-kort og grafer
+- [x] Mobiloptimalisering
+- [x] Forbedrede UI-komponenter (oppdaterte ikoner, blå fargede elementer)
 
- Dokumentopplasting og nedlasting
+---
 
- CSV-eksport
+## 📌 Veikart
 
- KPI-kort og grafer
+- [ ] Import fra LinkedIn-jobb-URL (metadata-scraper)
+- [ ] Deling med mentor via read-only link
+- [ ] Push-varsler i appen (toast + realtime updates)
+- [ ] Maler for følgebrev per selskap
 
- Mobiloptimalisering
+---
 
-📌 Veikart
- Import fra LinkedIn-jobb-URL (metadata-scraper)
+## 👨‍💻 Bidra
 
- Deling med mentor via read-only link
-
- Push-varsler i appen (toast + realtime updates)
-
- Maler for følgebrev per selskap
-
-👨‍💻 Bidra
 Pull requests er velkomne! For større endringer, opprett en issue først for å diskutere hva du ønsker å endre.
 
-📄 Lisens
+---
+
+## 📄 Lisens
+
 MIT © 2025 – Xala Technologies
