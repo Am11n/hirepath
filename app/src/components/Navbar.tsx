@@ -12,6 +12,10 @@ const Header = styled.header`
 	background: ${props => props.theme.colors.cardSurface};
 	color: ${props => props.theme.colors.headings};
 	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+	
+	@media (max-width: 640px) {
+		position: relative;
+	}
 `;
 
 const Nav = styled.nav`
@@ -20,16 +24,37 @@ const Nav = styled.nav`
 	align-items: center;
 	justify-content: space-between;
 	gap: 1.5rem;
+	
+	@media (max-width: 640px) {
+		flex-wrap: wrap;
+		gap: 1rem;
+		justify-content: space-between;
+	}
 `;
 
 const LeftSection = styled.div`
 	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	
+	@media (max-width: 640px) {
+		order: 1;
+		flex: 0 0 auto;
+	}
 `;
 
 const CenterSection = styled.div`
 	display: flex;
 	justify-content: center;
 	flex: 2;
+	
+	@media (max-width: 640px) {
+		order: 2;
+		flex: 1;
+		margin: 0.75rem 0;
+		justify-content: flex-start;
+	}
 `;
 
 const RightSection = styled.div`
@@ -38,6 +63,12 @@ const RightSection = styled.div`
 	gap: 1.5rem;
 	flex: 1;
 	justify-content: flex-end;
+	
+	@media (max-width: 640px) {
+		order: 3;
+		flex: 0 0 auto;
+		gap: 1rem;
+	}
 `;
 
 const SearchContainer = styled.div`
@@ -45,6 +76,26 @@ const SearchContainer = styled.div`
 	max-width: 1000px;
 	position: relative;
 	width: 100%;
+	
+	@media (max-width: 768px) {
+		min-width: 300px;
+		max-width: 600px;
+	}
+	
+	@media (max-width: 640px) {
+		min-width: 150px;
+		max-width: 200px;
+	}
+	
+	@media (max-width: 480px) {
+		min-width: 120px;
+		max-width: 150px;
+	}
+	
+	@media (max-width: 320px) {
+		min-width: 100px;
+		max-width: 120px;
+	}
 `;
 
 const SearchInput = styled.input`
@@ -56,10 +107,82 @@ const SearchInput = styled.input`
 	padding: 0.85rem 1.25rem 0.85rem 3rem;
 	font-size: 1.1rem;
 	
+	@media (max-width: 768px) {
+		padding: 0.7rem 1rem 0.7rem 2.5rem;
+		font-size: 1rem;
+	}
+	
+	@media (max-width: 480px) {
+		padding: 0.6rem 0.8rem 0.6rem 2rem;
+		font-size: 0.9rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.5rem 0.6rem 0.5rem 1.5rem;
+		font-size: 0.8rem;
+	}
+	
 	&:focus {
 		outline: 2px solid ${props => props.theme.colors.primary};
 		outline-offset: 2px;
 		border-color: ${props => props.theme.colors.primary};
+	}
+`;
+
+// Add styled component for search suggestions dropdown
+const SearchSuggestions = styled.div`
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: ${props => props.theme.colors.cardSurface};
+	border: 1px solid ${props => props.theme.colors.borders};
+	border-radius: 8px;
+	box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+	margin-top: 0.5rem;
+	z-index: 100;
+	max-height: 300px;
+	overflow-y: auto;
+	
+	@media (max-width: 480px) {
+		margin-top: 0.4rem;
+	}
+	
+	@media (max-width: 320px) {
+		margin-top: 0.3rem;
+	}
+`;
+
+const SearchSuggestionItem = styled.div`
+	padding: 0.75rem 1rem;
+	color: ${props => props.theme.colors.headings};
+	cursor: pointer;
+	
+	&:hover {
+		background-color: rgba(59, 130, 246, 0.1);
+	}
+	
+	@media (max-width: 480px) {
+		padding: 0.6rem 0.8rem;
+		font-size: 0.9rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.5rem 0.7rem;
+		font-size: 0.85rem;
+	}
+`;
+
+const SearchCategory = styled.div`
+	padding: 0.5rem 1rem;
+	font-size: 0.8rem;
+	color: ${props => props.theme.colors.bodyText};
+	font-weight: 600;
+	text-transform: uppercase;
+	
+	@media (max-width: 480px) {
+		padding: 0.4rem 0.8rem;
+		font-size: 0.75rem;
 	}
 `;
 
@@ -70,6 +193,21 @@ const SearchIcon = styled.span`
 	transform: translateY(-50%);
 	color: ${props => props.theme.colors.bodyText};
 	font-size: 1.2rem;
+	
+	@media (max-width: 768px) {
+		left: 1rem;
+		font-size: 1.1rem;
+	}
+	
+	@media (max-width: 480px) {
+		left: 0.8rem;
+		font-size: 1rem;
+	}
+	
+	@media (max-width: 320px) {
+		left: 0.6rem;
+		font-size: 0.9rem;
+	}
 `;
 
 const IconContainer = styled.div`
@@ -79,7 +217,7 @@ const IconContainer = styled.div`
 const IconButton = styled.button`
 	background: none;
 	border: none;
-	color: ${props => props.theme.colors.bodyText};
+	color: ${props => props.theme.colors.primary};
 	padding: 0.5rem;
 	border-radius: 8px;
 	cursor: pointer;
@@ -87,11 +225,23 @@ const IconButton = styled.button`
 	align-items: center;
 	justify-content: center;
 	
+	@media (max-width: 768px) {
+		padding: 0.4rem;
+	}
+	
+	@media (max-width: 480px) {
+		padding: 0.3rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.25rem;
+	}
+	
 	&:hover,
 	&:focus-visible {
-		background-color: rgba(255, 255, 255, 0.06);
+		background-color: rgba(59, 130, 246, 0.1);
 		outline: none;
-		color: ${props => props.theme.colors.headings};
+		color: ${props => props.theme.colors.primary};
 	}
 `;
 
@@ -108,6 +258,22 @@ const NotificationBadge = styled.span`
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	
+	@media (max-width: 480px) {
+		font-size: 0.6rem;
+		width: 16px;
+		height: 16px;
+		top: -3px;
+		right: -3px;
+	}
+	
+	@media (max-width: 320px) {
+		font-size: 0.5rem;
+		width: 14px;
+		height: 14px;
+		top: -2px;
+		right: -2px;
+	}
 `;
 
 const UserAvatar = styled.div`
@@ -122,6 +288,24 @@ const UserAvatar = styled.div`
 	font-weight: 600;
 	font-size: 0.9rem;
 	cursor: pointer;
+	
+	@media (max-width: 768px) {
+		width: 30px;
+		height: 30px;
+		font-size: 0.85rem;
+	}
+	
+	@media (max-width: 480px) {
+		width: 28px;
+		height: 28px;
+		font-size: 0.8rem;
+	}
+	
+	@media (max-width: 320px) {
+		width: 26px;
+		height: 26px;
+		font-size: 0.75rem;
+	}
 `;
 
 const Dropdown = styled.div`
@@ -137,6 +321,19 @@ const Dropdown = styled.div`
 	min-width: 200px;
 	margin-top: 0.5rem;
 	z-index: 100;
+	
+	@media (max-width: 480px) {
+		min-width: 180px;
+		padding: 0.4rem;
+		margin-top: 0.4rem;
+	}
+	
+	@media (max-width: 320px) {
+		min-width: 160px;
+		padding: 0.3rem;
+		margin-top: 0.3rem;
+		font-size: 0.9rem;
+	}
 `;
 
 const DropdownItem = styled.a`
@@ -146,6 +343,16 @@ const DropdownItem = styled.a`
 	padding: 0.75rem;
 	border-radius: 8px;
 	font-size: 0.95rem;
+	
+	@media (max-width: 480px) {
+		padding: 0.6rem;
+		font-size: 0.9rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.5rem;
+		font-size: 0.85rem;
+	}
 	
 	&:hover,
 	&:focus-visible {
@@ -159,6 +366,10 @@ const Divider = styled.div`
 	height: 1px;
 	background: ${props => props.theme.colors.borders};
 	margin: 0.5rem 0;
+	
+	@media (max-width: 320px) {
+		margin: 0.4rem 0;
+	}
 `;
 
 const LoginButton = styled.a`
@@ -171,13 +382,31 @@ const LoginButton = styled.a`
 	font-weight: 600;
 	font-size: 0.95rem;
 	transition: background-color 0.2s ease;
+	
 	:focus-visible {
 		outline: 2px solid #a5b4fc;
 		outline-offset: 2px;
 	}
+	
 	:hover {
 		background: #3730a3;
 	}
+	
+	@media (max-width: 768px) {
+		padding: 0.45rem 0.8rem;
+		font-size: 0.9rem;
+	}
+	
+	@media (max-width: 480px) {
+		padding: 0.4rem 0.7rem;
+		font-size: 0.85rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.35rem 0.6rem;
+		font-size: 0.8rem;
+	}
+	
 	@media (max-width: 640px) {
 		display: none;
 	}
@@ -193,8 +422,31 @@ const MenuButton = styled.button`
 	border-radius: 10px;
 	font-weight: 600;
 	cursor: pointer;
-	:focus-visible { outline: 2px solid #1f2937; outline-offset: 2px; }
-	:hover { background: rgba(255, 255, 255, 0.1); }
+	
+	:focus-visible { 
+		outline: 2px solid #1f2937; 
+		outline-offset: 2px; 
+	}
+	
+	:hover { 
+		background: rgba(255, 255, 255, 0.1); 
+	}
+	
+	@media (max-width: 768px) {
+		padding: 0.4rem 0.55rem;
+		font-size: 0.95rem;
+	}
+	
+	@media (max-width: 480px) {
+		padding: 0.35rem 0.5rem;
+		font-size: 0.9rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.3rem 0.45rem;
+		font-size: 0.85rem;
+	}
+	
 	@media (max-width: 640px) {
 		display: inline-flex;
 		align-items: center;
@@ -205,7 +457,7 @@ const MenuButton = styled.button`
 const MobileMenu = styled.div<{ $open: boolean }>`
 	position: absolute;
 	top: 100%;
-	right: 1rem;
+	left: 1rem;
 	background: ${props => props.theme.colors.cardSurface};
 	color: ${props => props.theme.colors.headings};
 	border: 1px solid ${props => props.theme.colors.borders};
@@ -215,9 +467,38 @@ const MobileMenu = styled.div<{ $open: boolean }>`
 	display: none;
 	min-width: 220px;
 	z-index: 100;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-10px);
+	transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+	
+	@media (max-width: 768px) {
+		min-width: 200px;
+		padding: 0.4rem;
+		left: 0.75rem;
+	}
+	
+	@media (max-width: 480px) {
+		min-width: 180px;
+		padding: 0.3rem;
+		left: 0.5rem;
+	}
+	
+	@media (max-width: 320px) {
+		min-width: 160px;
+		padding: 0.25rem;
+		left: 0.25rem;
+		font-size: 0.9rem;
+	}
+	
 	@media (max-width: 640px) {
-		display: ${p => (p.$open ? 'grid' : 'none')};
+		display: grid;
 		gap: 0.25rem;
+		${props => props.$open && `
+			opacity: 1;
+			visibility: visible;
+			transform: translateY(0);
+		`}
 	}
 `;
 
@@ -227,6 +508,17 @@ const MobileItem = styled.a`
 	padding: 0.6rem 0.75rem;
 	border-radius: 8px;
 	font-size: 0.95rem;
+	
+	@media (max-width: 480px) {
+		padding: 0.5rem 0.6rem;
+		font-size: 0.9rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.4rem 0.5rem;
+		font-size: 0.85rem;
+	}
+	
 	:hover, :focus-visible { 
 		background: rgba(255, 255, 255, 0.06); 
 		outline: none; 
@@ -236,8 +528,8 @@ const MobileItem = styled.a`
 
 const NotificationBellIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -249,19 +541,34 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 	const [open, setOpen] = useState(false);
 	const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
+	const [searchQuery, setSearchQuery] = useState(''); // Add search query state
+	const [showSearchSuggestions, setShowSearchSuggestions] = useState(false); // Add search suggestions state
 	const userDropdownRef = useRef<HTMLDivElement>(null);
 	const notificationsRef = useRef<HTMLDivElement>(null);
+	const mobileMenuRef = useRef<HTMLDivElement>(null);
+	const searchInputRef = useRef<HTMLInputElement>(null); // Add ref for search input
 	const { user, signOut } = useAuth();
 	const navigate = useNavigate();
 
 	// Close dropdowns when clicking outside
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+			// Type guard for event.target
+			if (!(event.target instanceof Element)) return;
+			
+			if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
 				setUserDropdownOpen(false);
 			}
-			if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+			if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
 				setNotificationsOpen(false);
+			}
+			// Close mobile menu when clicking outside
+			if (open && mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+				setOpen(false);
+			}
+			// Close search suggestions when clicking outside
+			if (showSearchSuggestions && searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+				setShowSearchSuggestions(false);
 			}
 		};
 
@@ -269,7 +576,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
-	}, []);
+	}, [open, showSearchSuggestions]);
 
 	const handleSignOut = async (e: React.MouseEvent) => {
 		e.preventDefault();
@@ -298,19 +605,61 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 		}
 	};
 
+	// Add search handler
+	const handleSearch = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (searchQuery.trim()) {
+			navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+			setShowSearchSuggestions(false);
+		}
+	};
+
+	// Add search suggestion click handler
+	const handleSuggestionClick = (category: string) => {
+		if (searchQuery.trim()) {
+			navigate(`/search?q=${encodeURIComponent(searchQuery)}&category=${category}`);
+			setShowSearchSuggestions(false);
+			setSearchQuery('');
+		}
+	};
+
 	return (
 		<Header>
 			<Nav aria-label="Primary" onKeyDown={handleSearchShortcut}>
-				<LeftSection></LeftSection> {/* Empty div to balance the left side */}
+				<LeftSection>
+					<MenuButton onClick={handleMenuToggle}>
+						☰
+					</MenuButton>
+				</LeftSection>
 				
 				<CenterSection>
 					<SearchContainer>
 						<SearchIcon>🔍</SearchIcon>
-						<SearchInput 
-							id="search-input"
-							type="text" 
-							placeholder="Search… (Ctrl + /)" 
-						/>
+						<form onSubmit={handleSearch}>
+							<SearchInput 
+								id="search-input"
+								ref={searchInputRef}
+								type="text" 
+								placeholder="Search… (Ctrl + /)" 
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								onFocus={() => setShowSearchSuggestions(true)}
+							/>
+						</form>
+						{showSearchSuggestions && searchQuery.trim() && (
+							<SearchSuggestions>
+								<SearchCategory>SEARCH IN</SearchCategory>
+								<SearchSuggestionItem onClick={() => handleSuggestionClick('applications')}>
+									Applications
+								</SearchSuggestionItem>
+								<SearchSuggestionItem onClick={() => handleSuggestionClick('tasks')}>
+									Tasks
+								</SearchSuggestionItem>
+								<SearchSuggestionItem onClick={() => handleSuggestionClick('documents')}>
+									Documents
+								</SearchSuggestionItem>
+							</SearchSuggestions>
+						)}
 					</SearchContainer>
 				</CenterSection>
 				
@@ -339,7 +688,6 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 							</UserAvatar>
 							{userDropdownOpen && (
 								<Dropdown>
-									<DropdownItem href="/profile">Profile</DropdownItem>
 									<DropdownItem href="/settings">Settings</DropdownItem>
 									<Divider />
 									<DropdownItem href="#" onClick={handleSignOut}>Sign out</DropdownItem>
@@ -349,24 +697,25 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 					) : (
 						<LoginButton href="/signin" aria-label="Sign in">Sign in</LoginButton>
 					)}
-					
-					<MenuButton onClick={handleMenuToggle}>
-						☰
-					</MenuButton>
 				</RightSection>
 				
-				<MobileMenu $open={open}>
-					<MobileItem href="/features">Features</MobileItem>
-					<MobileItem href="/blog">Blog</MobileItem>
-					<MobileItem href="/about">About</MobileItem>
+				<MobileMenu ref={mobileMenuRef} $open={open}>
 					{user ? (
 						<>
 							<MobileItem href="/dashboard">Dashboard</MobileItem>
-							<MobileItem href="/profile">Profile</MobileItem>
-							<MobileItem href="#" onClick={handleSignOut}>Sign out</MobileItem>
+							<MobileItem href="/applications">Applications</MobileItem>
+							<MobileItem href="/documents">Documents</MobileItem>
+							<MobileItem href="/tasks">Tasks</MobileItem>
+							<MobileItem href="/insights">Insights</MobileItem>
+							<MobileItem href="/settings">Settings</MobileItem>
 						</>
 					) : (
-						<MobileItem href="/signin">Sign in</MobileItem>
+						<>
+							<MobileItem href="/features">Features</MobileItem>
+							<MobileItem href="/blog">Blog</MobileItem>
+							<MobileItem href="/about">About</MobileItem>
+							<MobileItem href="/signin">Sign in</MobileItem>
+						</>
 					)}
 				</MobileMenu>
 			</Nav>

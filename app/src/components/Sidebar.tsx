@@ -221,6 +221,16 @@ export const Sidebar: FC<SidebarProps> = ({
     { name: 'Profile', path: '/profile', icon: <ProfileIcon /> },
   ];
 
+  const handleCollapseToggle = () => {
+    // On mobile, the button should only close the sidebar
+    if (window.innerWidth <= 1024) {
+      if (onClose) onClose();
+    } else {
+      // Desktop behavior remains the same
+      if (onCollapseToggle) onCollapseToggle();
+    }
+  };
+
   return (
     <SidebarContainer $isOpen={isOpen} $collapsed={collapsed}>
       <LogoContainer $collapsed={collapsed}>
@@ -248,9 +258,18 @@ export const Sidebar: FC<SidebarProps> = ({
       </NavList>
       
       <BottomSection>
-        <CollapseButton $collapsed={collapsed} onClick={onCollapseToggle}>
-          <CollapseIcon collapsed={collapsed} />
-          <span>{collapsed ? 'Expand' : 'Collapse'}</span>
+        <CollapseButton $collapsed={collapsed} onClick={handleCollapseToggle}>
+          {window.innerWidth <= 1024 ? (
+            <>
+              <CollapseIcon collapsed={true} />
+              <span>Collapse</span>
+            </>
+          ) : (
+            <>
+              <CollapseIcon collapsed={collapsed} />
+              <span>{collapsed ? 'Expand' : 'Collapse'}</span>
+            </>
+          )}
         </CollapseButton>
       </BottomSection>
     </SidebarContainer>

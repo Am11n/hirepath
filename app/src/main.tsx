@@ -21,6 +21,7 @@ import { Insights } from './pages/Insights'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
+import { Search } from './pages/Search'
 
 // Protected routes that use AppLayout
 const protectedRoutes = [
@@ -69,6 +70,14 @@ const protectedRoutes = [
     element: (
       <AppLayout>
         <Profile />
+      </AppLayout>
+    )
+  },
+  {
+    path: '/search',
+    element: (
+      <AppLayout>
+        <Search />
       </AppLayout>
     )
   },

@@ -4,8 +4,12 @@ import styled from 'styled-components';
 const ProfileContainer = styled.div`
   width: 100%;
   max-width: 100%;
-  padding: 1rem;
+  padding: 0.5rem;
   box-sizing: border-box;
+  
+  @media (min-width: 480px) {
+    padding: 1rem;
+  }
   
   @media (min-width: 768px) {
     padding: 2rem;
@@ -14,45 +18,90 @@ const ProfileContainer = styled.div`
 
 const Header = styled.h1`
   color: ${props => props.theme.colors.headings};
-  font-size: 1.875rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+  
+  @media (min-width: 480px) {
+    font-size: 1.75rem;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 1.875rem;
+    margin-bottom: 2rem;
+  }
 `;
 
 const Section = styled.div`
   background-color: ${props => props.theme.colors.cardSurface};
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  
+  @media (min-width: 480px) {
+    padding: 1.25rem;
+  }
   
   @media (min-width: 768px) {
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  @media (min-width: 1024px) {
     padding: 2rem;
   }
 `;
 
 const SectionHeader = styled.h2`
   color: ${props => props.theme.colors.headings};
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
+  
+  @media (min-width: 480px) {
+    font-size: 1.375rem;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 1.5rem;
+    margin: 0 0 1.5rem 0;
+  }
 `;
 
 const Form = styled.form`
-  display: grid;
-  gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  
+  @media (min-width: 480px) {
+    gap: 1.25rem;
+  }
+  
+  @media (min-width: 768px) {
+    gap: 1.5rem;
+  }
 `;
 
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.375rem;
+  
+  @media (min-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 const Label = styled.label`
   color: ${props => props.theme.colors.bodyText};
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 500;
+  
+  @media (min-width: 480px) {
+    font-size: 0.9rem;
+  }
 `;
 
 const Input = styled.input`
@@ -60,13 +109,23 @@ const Input = styled.input`
   color: ${props => props.theme.colors.headings};
   border: 1px solid ${props => props.theme.colors.borders};
   border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 1rem;
+  padding: 0.6rem;
+  font-size: 0.9rem;
   
   &:focus {
     outline: 2px solid ${props => props.theme.colors.primary};
     outline-offset: 2px;
     border-color: ${props => props.theme.colors.primary};
+  }
+  
+  @media (min-width: 480px) {
+    padding: 0.7rem;
+    font-size: 0.95rem;
+  }
+  
+  @media (min-width: 768px) {
+    padding: 0.75rem;
+    font-size: 1rem;
   }
 `;
 
@@ -74,13 +133,14 @@ const Button = styled.button`
   background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   align-self: flex-start;
+  width: 100%;
   
   &:hover {
     box-shadow: 0 0 0 2px ${props => props.theme.colors.primary}, 0 8px 24px rgba(0,0,0,.35);
@@ -90,18 +150,31 @@ const Button = styled.button`
     outline: 2px solid ${props => props.theme.colors.primary};
     outline-offset: 2px;
   }
+  
+  @media (min-width: 480px) {
+    width: auto;
+    padding: 0.65rem 1.3rem;
+    font-size: 0.95rem;
+  }
+  
+  @media (min-width: 768px) {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
 `;
 
 const DangerButton = styled.button`
   background: ${props => props.theme.colors.error};
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
   
   &:hover {
     background: #dc2626;
@@ -112,11 +185,33 @@ const DangerButton = styled.button`
     outline: 2px solid ${props => props.theme.colors.error};
     outline-offset: 2px;
   }
+  
+  @media (min-width: 480px) {
+    width: auto;
+    padding: 0.65rem 1.3rem;
+    font-size: 0.95rem;
+  }
+  
+  @media (min-width: 768px) {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
 `;
 
 const DescriptionText = styled.p`
   color: ${props => props.theme.colors.bodyText};
-  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  
+  @media (min-width: 480px) {
+    font-size: 0.95rem;
+  }
+  
+  @media (min-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 export const Profile: FC = () => {
