@@ -1,8 +1,9 @@
 import type { FC, ReactNode } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
+import { useLocation } from 'react-router-dom';
 
 const LayoutContainer = styled.div`
   display: flex;
@@ -10,7 +11,7 @@ const LayoutContainer = styled.div`
   background-color: ${props => props.theme.colors.background};
 `;
 
-const MainContent = styled.main<{ $sidebarCollapsed?: boolean }>`
+const MainContent = styled.main<{ $sidebarCollapsed?: boolean; $sidebarOpen?: boolean }>`
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -18,7 +19,12 @@ const MainContent = styled.main<{ $sidebarCollapsed?: boolean }>`
   transition: margin-left 0.3s ease;
   
   @media (max-width: 1024px) {
-    margin-left: 0;
+    margin-left: 0; // default on mobile/tablet
+  }
+  
+  /* Tablet: if sidebar is open, reserve drawer width */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    margin-left: ${props => props.$sidebarOpen ? '320px' : '0'};
   }
 `;
 
@@ -38,6 +44,14 @@ interface AppLayoutProps {
 export const AppLayout: FC<AppLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const location = useLocation();
+
+  // Auto-close sidebar on route change for widths <= 1024px
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname]);
 
   return (
     <LayoutContainer>
@@ -47,7 +61,7 @@ export const AppLayout: FC<AppLayoutProps> = ({ children }) => {
         collapsed={sidebarCollapsed}
         onCollapseToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
-      <MainContent $sidebarCollapsed={sidebarCollapsed}>
+      <MainContent $sidebarCollapsed={sidebarCollapsed} $sidebarOpen={sidebarOpen}>
         <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         <ContentWrapper>
           {children}

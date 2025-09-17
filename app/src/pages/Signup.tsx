@@ -11,6 +11,9 @@ const PageContainer = styled.div`
   padding: 0;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 `;
 
 const ContentWrapper = styled.div`
@@ -22,10 +25,19 @@ const ContentWrapper = styled.div`
   align-items: center;
   justify-content: center;
   flex: 1;
+  box-sizing: border-box;
   
   @media (max-width: 768px) {
     flex-direction: column;
     padding: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+  }
+  
+  @media (max-width: 320px) {
+    padding: 0.5rem;
   }
 `;
 
@@ -39,11 +51,20 @@ const HeroSection = styled.div`
   max-width: 50%;
   align-items: center;
   text-align: center;
+  box-sizing: border-box;
   
   @media (max-width: 768px) {
     padding-right: 0;
     padding-bottom: 2rem;
     max-width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    padding-bottom: 1rem;
+  }
+  
+  @media (max-width: 320px) {
+    padding-bottom: 0.5rem;
   }
 `;
 
@@ -74,6 +95,8 @@ const FormContainer = styled.div`
   align-items: center;
   justify-content: center;
   max-width: 50%;
+  width: 100%;
+  box-sizing: border-box;
   
   @media (max-width: 768px) {
     max-width: 100%;
@@ -83,15 +106,34 @@ const FormContainer = styled.div`
 const Card = styled.div`
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 2rem;
   width: 100%;
   max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
   
   @media (min-width: 768px) {
     padding: 3rem;
+  }
+  
+  @media (max-width: 768px) {
+    max-width: 100%;
+    padding: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1.25rem;
+  }
+  
+  @media (max-width: 320px) {
+    padding: 1rem;
+  }
+  
+  @media (max-width: 280px) {
+    padding: 0.75rem;
   }
 `;
 
@@ -128,6 +170,8 @@ const Input = styled.input`
   padding: 0.75rem 1rem;
   color: white;
   font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
   
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
@@ -137,6 +181,21 @@ const Input = styled.input`
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.95rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 320px) {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.85rem;
   }
 `;
 
@@ -150,6 +209,8 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
   
   &:hover {
     transform: translateY(-2px);
@@ -160,6 +221,21 @@ const Button = styled.button`
     opacity: 0.7;
     cursor: not-allowed;
     transform: none;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.65rem;
+    font-size: 0.95rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 320px) {
+    padding: 0.5rem;
+    font-size: 0.85rem;
   }
 `;
 

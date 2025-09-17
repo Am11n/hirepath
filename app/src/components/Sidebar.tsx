@@ -17,11 +17,21 @@ const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>
   z-index: 100;
   transition: width 0.3s ease;
   
-  @media (max-width: 1024px) {
+  /* Phones: full-screen overlay */
+  @media (max-width: 640px) {
     display: ${props => props.$isOpen ? 'flex' : 'none'};
     width: 100%;
     background-color: rgba(21, 26, 36, 0.95);
     backdrop-filter: blur(10px);
+  }
+  
+  /* Tablets: drawer with fixed width */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    display: ${props => props.$isOpen ? 'flex' : 'none'};
+    width: 320px;
+    background-color: ${props => props.theme.colors.cardSurface};
+    backdrop-filter: none;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.35);
   }
 `;
 
@@ -221,6 +231,16 @@ export const Sidebar: FC<SidebarProps> = ({
     { name: 'Profile', path: '/profile', icon: <ProfileIcon /> },
   ];
 
+  const handleCollapseToggle = () => {
+    // On mobile, the button should only close the sidebar
+    if (window.innerWidth <= 1024) {
+      if (onClose) onClose();
+    } else {
+      // Desktop behavior remains the same
+      if (onCollapseToggle) onCollapseToggle();
+    }
+  };
+
   return (
     <SidebarContainer $isOpen={isOpen} $collapsed={collapsed}>
       <LogoContainer $collapsed={collapsed}>
@@ -248,9 +268,18 @@ export const Sidebar: FC<SidebarProps> = ({
       </NavList>
       
       <BottomSection>
-        <CollapseButton $collapsed={collapsed} onClick={onCollapseToggle}>
-          <CollapseIcon collapsed={collapsed} />
-          <span>{collapsed ? 'Expand' : 'Collapse'}</span>
+        <CollapseButton $collapsed={collapsed} onClick={handleCollapseToggle}>
+          {window.innerWidth <= 1024 ? (
+            <>
+              <CollapseIcon collapsed={true} />
+              <span>Collapse</span>
+            </>
+          ) : (
+            <>
+              <CollapseIcon collapsed={collapsed} />
+              <span>{collapsed ? 'Expand' : 'Collapse'}</span>
+            </>
+          )}
         </CollapseButton>
       </BottomSection>
     </SidebarContainer>
