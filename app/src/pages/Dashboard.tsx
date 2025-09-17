@@ -268,6 +268,7 @@ const InterviewDetailsLink = styled.a`
     gap: 0.125rem;
   }
   
+  
   @media (min-width: 480px) {
     font-size: 1rem;
     margin-top: 0.5rem;
@@ -1117,7 +1118,7 @@ export const Dashboard: FC = () => {
       <WelcomeCard>
         <WelcomeHeader>
           <div>
-            <WelcomeTitle>Welcome back, {getUserName()}</WelcomeTitle>
+            <WelcomeTitle>Welcome back</WelcomeTitle>
             <WelcomeSubtitle>{getWelcomeMessage()}</WelcomeSubtitle>
           </div>
           <div>
