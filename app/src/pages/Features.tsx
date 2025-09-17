@@ -146,7 +146,7 @@ export const Features: FC = () => {
 				</Grid>
 				<BottomCTA>
 					<CTAHeading>Ready to get started?</CTAHeading>
-					<CTAButton href="/" aria-label="Create your free account">Create Your Free Account</CTAButton>
+					<CTAButton href="/signup" aria-label="Create your free account">Create Your Free Account</CTAButton>
 				</BottomCTA>
 			</Container>
 			<Footer />
