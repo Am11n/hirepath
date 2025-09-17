@@ -2,57 +2,17 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+// import { useAuth } from '../hooks/useAuth';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, ReferenceLine, Label
 } from 'recharts';
 import { kpiData, applicationsOverTimeData, tasksCompletedData, upcomingReminders, followUpsNeeded, recentActivity } from '../data/mock';
 
-// Define types for our data structures
-interface KpiItem {
-  value: number | string;
-  change: string;
-  changePositive: boolean;
-}
+// Define types for our data structures (removed unused types)
 
-interface KpiData {
-  applicationsSubmitted: KpiItem;
-  interviewsScheduled: KpiItem;
-  documentsUploaded: KpiItem;
-  successRate: KpiItem;
-}
-
-interface ApplicationDataPoint {
-  week: string;
-  applications: number;
-}
-
-interface TaskDataPoint {
-  week: string;
-  completed: number;
-  pending: number;
-}
-
-interface Reminder {
-  id: string;
-  title: string;
-  time: string;
-  status?: 'overdue' | 'due-soon';
-}
-
-interface FollowUp {
-  id: string;
-  company: string;
-  lastContact: string;
-}
-
-interface Activity {
-  id: string;
-  action: string;
-  time: string;
-  type?: string;
-}
+// Removed unused interfaces (KpiData, ApplicationDataPoint, TaskDataPoint, Reminder, FollowUp, Activity)
+// to satisfy lint rules and keep the file lean.
 
 // Styled components with enhanced mobile responsiveness
 const DashboardContainer = styled.div`
@@ -1030,24 +990,9 @@ const CustomLegend = (props: { payload?: Array<{ value: string; color: string }>
 
 export const Dashboard: FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Get user data from Supabase Auth
+  // const { user } = useAuth(); // Not used currently
   const [showNotification, setShowNotification] = useState(true);
   
-  // Function to capitalize the first letter of a string
-  const capitalizeFirstLetter = (string: string | undefined) => {
-    if (!string) return 'User';
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
-  
-  // Get the username from email or fallback to 'User'
-  const getUserName = () => {
-    if (user?.email) {
-      const name = user.email.split('@')[0];
-      return capitalizeFirstLetter(name);
-    }
-    return 'User';
-  };
-
   // Function to get personalized welcome message based on day and interview status
   const getWelcomeMessage = () => {
     const today = new Date();
@@ -1091,14 +1036,7 @@ export const Dashboard: FC = () => {
     }
   };
 
-  // Function to handle search across Applications, Tasks, and Documents
-  const handleSearch = (query: string) => {
-    // This would typically be implemented with actual search functionality
-    // For now, we'll just navigate to the search results page
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query)}`);
-    }
-  };
+  // Search handler is not used in UI yet
 
   return (
     <DashboardContainer>

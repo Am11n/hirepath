@@ -447,7 +447,7 @@ const MenuButton = styled.button`
 		font-size: 0.85rem;
 	}
 	
-	@media (max-width: 640px) {
+	@media (max-width: 1024px) {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
@@ -464,7 +464,7 @@ const MobileMenu = styled.div<{ $open: boolean }>`
 	border-radius: 12px;
 	box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 	padding: 0.5rem;
-	display: none;
+	display: none; /* disabled dropdown */
 	min-width: 220px;
 	z-index: 100;
 	opacity: 0;
@@ -491,14 +491,8 @@ const MobileMenu = styled.div<{ $open: boolean }>`
 		font-size: 0.9rem;
 	}
 	
-	@media (max-width: 640px) {
-		display: grid;
-		gap: 0.25rem;
-		${props => props.$open && `
-			opacity: 1;
-			visibility: visible;
-			transform: translateY(0);
-		`}
+	@media (max-width: 1024px) {
+		display: none; /* ensure disabled on tablets/phones too */
 	}
 `;
 

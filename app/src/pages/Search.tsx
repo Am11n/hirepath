@@ -227,7 +227,17 @@ export const Search: FC = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  
+  type SearchResultItem = {
+    id: number;
+    title: string;
+    description: string;
+    type: string;
+    date: string;
+    status: string;
+  };
+
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
 
   // Parse query parameters
   useEffect(() => {

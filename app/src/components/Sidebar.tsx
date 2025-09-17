@@ -17,11 +17,21 @@ const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>
   z-index: 100;
   transition: width 0.3s ease;
   
-  @media (max-width: 1024px) {
+  /* Phones: full-screen overlay */
+  @media (max-width: 640px) {
     display: ${props => props.$isOpen ? 'flex' : 'none'};
     width: 100%;
     background-color: rgba(21, 26, 36, 0.95);
     backdrop-filter: blur(10px);
+  }
+  
+  /* Tablets: drawer with fixed width */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    display: ${props => props.$isOpen ? 'flex' : 'none'};
+    width: 320px;
+    background-color: ${props => props.theme.colors.cardSurface};
+    backdrop-filter: none;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.35);
   }
 `;
 

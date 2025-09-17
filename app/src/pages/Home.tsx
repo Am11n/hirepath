@@ -178,39 +178,36 @@ const ShowcaseTitle = styled.h2`
 	font-weight: 800;
 `;
 
-const LaptopFrame = styled.div`
+// Vertical stack for provided showcase images
+const ShowcaseStack = styled.div`
+	display: grid;
+	gap: 1.75rem;
+	max-width: 1600px;
 	margin: 0 auto;
-	max-width: 980px;
-	border-radius: 16px 16px 10px 10px;
-	background: #0e1424;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-	position: relative;
-	:before {
-		content: '';
-		display: block;
-		height: 26px;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-		border-radius: 16px 16px 0 0;
-		background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+	grid-template-columns: 1fr;
+	@media (min-width: 768px) {
+		grid-template-columns: 1fr 1fr; /* two columns so second row sits side by side */
 	}
 `;
 
-const Screen = styled.div`
-	background: #0b1220;
-	aspect-ratio: 16 / 9;
-	border-radius: 0 0 10px 10px;
+const ShowcaseItem = styled.div`
+	width: 100%;
+	height: clamp(420px, 36vw, 760px); /* larger non-laptop items */
+	border-radius: 16px;
 	overflow: hidden;
-	img { display: block; width: 100%; height: 100%; object-fit: cover; }
-`;
-
-const Placeholder = styled.div`
 	display: grid;
 	place-items: center;
-	height: 100%;
-	color: #cbd5e1;
-	font-size: 0.95rem;
+	background: transparent;
+	border: none;
+	img { width: 100%; height: 100%; object-fit: contain; background: transparent; }
+	
+	/* Make the first (laptop) item much larger and full width */
+	&:first-child {
+		grid-column: 1 / -1;
+		height: clamp(560px, 60vw, 950px);
+	}
 `;
+
 
 const BottomCTA = styled.section`
 	padding: 3rem 1rem 3rem 1rem;
@@ -253,7 +250,10 @@ export const Home: FC = () => {
 		{ icon: '📊', title: 'Insights', desc: 'See stats and progress.' },
 	];
 
-	const showcaseSrc = '/showcase/app-home.png';
+	// Order: Laptop first (bigger), then iPad, then Mobile
+	const showcaseImg1 = encodeURI('/e3ef494c2fe.png'); // laptop
+	const showcaseImg2 = encodeURI('/5HLjiCamWq3.png'); // iPad
+	const showcaseImg3 = encodeURI('/h98h3GkI8T (1).png'); // mobile
 
 	return (
 		<Page>
@@ -298,12 +298,17 @@ export const Home: FC = () => {
 
 				<ShowcaseSection aria-label="Showcase">
 					<ShowcaseTitle>Showcase</ShowcaseTitle>
-					<LaptopFrame>
-						<Screen>
-							<img src={showcaseSrc} alt="App screenshot" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-							<Placeholder>Add a screenshot at /public/showcase/app-home.png</Placeholder>
-						</Screen>
-					</LaptopFrame>
+					<ShowcaseStack>
+						<ShowcaseItem>
+							<img src={showcaseImg1} alt="Laptop showcase" />
+						</ShowcaseItem>
+						<ShowcaseItem>
+							<img src={showcaseImg2} alt="Tablet showcase" />
+						</ShowcaseItem>
+						<ShowcaseItem>
+							<img src={showcaseImg3} alt="Mobile showcase" />
+						</ShowcaseItem>
+					</ShowcaseStack>
 				</ShowcaseSection>
 			</Container>
 
