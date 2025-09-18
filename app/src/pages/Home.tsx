@@ -178,36 +178,19 @@ const ShowcaseTitle = styled.h2`
 	font-weight: 800;
 `;
 
-// Vertical stack for provided showcase images
-const ShowcaseStack = styled.div`
-	display: grid;
-	gap: 1.75rem;
-	max-width: 1600px;
-	margin: 0 auto;
-	grid-template-columns: 1fr;
-	@media (min-width: 768px) {
-		grid-template-columns: 1fr 1fr; /* two columns so second row sits side by side */
-	}
-`;
-
-const ShowcaseItem = styled.div`
+const ShowcaseImage = styled.img`
+	display: block;
 	width: 100%;
-	height: clamp(420px, 36vw, 760px); /* larger non-laptop items */
+	height: auto;
 	border-radius: 16px;
-	overflow: hidden;
-	display: grid;
-	place-items: center;
-	background: transparent;
-	border: none;
-	img { width: 100%; height: 100%; object-fit: contain; background: transparent; }
-	
-	/* Make the first (laptop) item much larger and full width */
-	&:first-child {
-		grid-column: 1 / -1;
-		height: clamp(560px, 60vw, 950px);
-	}
 `;
 
+const ShowcaseBleed = styled.div`
+	width: min(1600px, 100vw);
+	margin-left: 50%;
+	transform: translateX(-50%);
+	padding: 0 1rem;
+`;
 
 const BottomCTA = styled.section`
 	padding: 3rem 1rem 3rem 1rem;
@@ -250,10 +233,7 @@ export const Home: FC = () => {
 		{ icon: '📊', title: 'Insights', desc: 'See stats and progress.' },
 	];
 
-	// Order: Laptop first (bigger), then iPad, then Mobile
-	const showcaseImg1 = encodeURI('/e3ef494c2fe.png'); // laptop
-	const showcaseImg2 = encodeURI('/5HLjiCamWq3.png'); // iPad
-	const showcaseImg3 = encodeURI('/h98h3GkI8T (1).png'); // mobile
+	// Removed showcase images and grid
 
 	return (
 		<Page>
@@ -298,17 +278,9 @@ export const Home: FC = () => {
 
 				<ShowcaseSection aria-label="Showcase">
 					<ShowcaseTitle>Showcase</ShowcaseTitle>
-					<ShowcaseStack>
-						<ShowcaseItem>
-							<img src={showcaseImg1} alt="Laptop showcase" />
-						</ShowcaseItem>
-						<ShowcaseItem>
-							<img src={showcaseImg2} alt="Tablet showcase" />
-						</ShowcaseItem>
-						<ShowcaseItem>
-							<img src={showcaseImg3} alt="Mobile showcase" />
-						</ShowcaseItem>
-					</ShowcaseStack>
+					<ShowcaseBleed>
+						<ShowcaseImage src={encodeURI('/Showcase-bilde.svg')} alt="HirePath showcase" />
+					</ShowcaseBleed>
 				</ShowcaseSection>
 			</Container>
 

@@ -4,7 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>`
   width: ${props => props.$collapsed ? '70px' : '250px'};
-  background-color: ${props => props.theme.colors.cardSurface};
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: saturate(120%) blur(6px);
   color: ${props => props.theme.colors.bodyText};
   height: 100vh;
   position: fixed;
@@ -21,16 +22,16 @@ const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>
   @media (max-width: 640px) {
     display: ${props => props.$isOpen ? 'flex' : 'none'};
     width: 100%;
-    background-color: rgba(21, 26, 36, 0.95);
-    backdrop-filter: blur(10px);
+    background-color: rgba(15, 23, 42, 0.85);
+    backdrop-filter: saturate(120%) blur(8px);
   }
   
   /* Tablets: drawer with fixed width */
   @media (min-width: 641px) and (max-width: 1024px) {
     display: ${props => props.$isOpen ? 'flex' : 'none'};
     width: 320px;
-    background-color: ${props => props.theme.colors.cardSurface};
-    backdrop-filter: none;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: saturate(120%) blur(6px);
     box-shadow: 10px 0 30px rgba(0,0,0,0.35);
   }
 `;
@@ -50,6 +51,22 @@ const LogoContainer = styled.div<{ $collapsed?: boolean }>`
 
 const Logo = styled.img`
   height: 50px;
+  width: auto;
+`;
+
+const CollapsedLogoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+`;
+
+const CollapsedLogo = styled.img`
+  height: 50px; /* match expanded logo size */
   width: auto;
 `;
 
@@ -246,6 +263,12 @@ export const Sidebar: FC<SidebarProps> = ({
       <LogoContainer $collapsed={collapsed}>
         <Logo src="/HirePath-ForMørkBakgrunn (1).png" alt="HirePath" />
       </LogoContainer>
+      
+      {collapsed && (
+        <CollapsedLogoWrapper>
+          <CollapsedLogo src={encodeURI('/images/Logo uten navn-HirePath.svg')} alt="HirePath" />
+        </CollapsedLogoWrapper>
+      )}
       
       <NavList>
         {menuItems.map((item) => (
