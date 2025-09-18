@@ -151,6 +151,15 @@ const Form = styled.form`
   gap: 1.5rem;
 `;
 
+const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  @media (min-width: 520px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -284,6 +293,8 @@ const ErrorText = styled.p`
 `;
 
 export const Signup: FC = () => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -299,12 +310,16 @@ export const Signup: FC = () => {
       setError('Passwords do not match');
       return;
     }
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Please enter your first and last name');
+      return;
+    }
     
     try {
       setLoading(true);
       setError('');
       
-      await signUp(email, password);
+      await signUp(email, password, { firstName: firstName.trim(), lastName: lastName.trim() });
       navigate('/dashboard');
     } catch (error) {
       // Type guard to check if error is an Error object
@@ -333,6 +348,31 @@ export const Signup: FC = () => {
         {error && <ErrorText>{error}</ErrorText>}
         
         <Form onSubmit={handleSubmit}>
+          <FormRow>
+            <FormGroup>
+              <Label htmlFor="firstName">First name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Enter your first name"
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label htmlFor="lastName">Last name</Label>
+              <Input
+                id="lastName"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Enter your last name"
+                required
+              />
+            </FormGroup>
+          </FormRow>
+          
           <FormGroup>
             <Label htmlFor="email">Email</Label>
             <Input

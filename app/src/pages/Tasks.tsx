@@ -100,7 +100,8 @@ const Tab = styled.button<{ $active?: boolean }>`
 `;
 
 const TaskListContainer = styled.div`
-  background-color: ${props => props.theme.colors.cardSurface};
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
   padding: 1rem;
@@ -229,7 +230,8 @@ const TaskApplication = styled.span`
 `;
 
 const EmptyStateContainer = styled.div`
-  background-color: ${props => props.theme.colors.cardSurface};
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
   padding: 1.5rem;

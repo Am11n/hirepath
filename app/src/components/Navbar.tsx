@@ -9,7 +9,8 @@ const Header = styled.header`
 	top: 0;
 	z-index: 10;
 	width: 100%;
-	background: ${props => props.theme.colors.cardSurface};
+	background: rgba(15, 23, 42, 0.6);
+	backdrop-filter: saturate(120%) blur(6px);
 	color: ${props => props.theme.colors.headings};
 	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
 	
@@ -135,7 +136,8 @@ const SearchSuggestions = styled.div`
 	top: 100%;
 	left: 0;
 	right: 0;
-	background: ${props => props.theme.colors.cardSurface};
+	background: rgba(15, 23, 42, 0.85);
+	backdrop-filter: saturate(120%) blur(8px);
 	border: 1px solid ${props => props.theme.colors.borders};
 	border-radius: 8px;
 	box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -312,7 +314,8 @@ const Dropdown = styled.div`
 	position: absolute;
 	top: 100%;
 	right: 0;
-	background: ${props => props.theme.colors.cardSurface};
+	background: rgba(15, 23, 42, 0.85);
+	backdrop-filter: saturate(120%) blur(8px);
 	color: ${props => props.theme.colors.headings};
 	border: 1px solid ${props => props.theme.colors.borders};
 	border-radius: 12px;

@@ -28,10 +28,11 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     getSession()
   }, [])
 
-  const signUp = async (email: string, password: string) => {
+  const signUp: AuthContextType['signUp'] = async (email, password, userData) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: userData ? { data: { first_name: userData.firstName, last_name: userData.lastName } } : undefined,
     })
     
     return { error }

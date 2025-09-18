@@ -8,7 +8,9 @@ import { useLocation } from 'react-router-dom';
 const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
-  background-color: ${props => props.theme.colors.background};
+  background: radial-gradient(900px 500px at 15% 0%, rgba(59, 130, 246, 0.22), transparent 60%),
+              radial-gradient(800px 450px at 85% 0%, rgba(168, 85, 247, 0.18), transparent 60%),
+              linear-gradient(180deg, #0b1020 0%, #0e1424 50%, #0b1220 100%);
 `;
 
 const MainContent = styled.main<{ $sidebarCollapsed?: boolean; $sidebarOpen?: boolean }>`

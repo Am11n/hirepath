@@ -3,7 +3,7 @@ import { createContext } from 'react';
 
 export interface AuthContextType {
   user: User | null;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, userData?: { firstName: string; lastName: string }) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
   loading: boolean;

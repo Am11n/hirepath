@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-// import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, ReferenceLine, Label
@@ -108,7 +108,8 @@ const NotificationClose = styled.button`
 `;
 
 const WelcomeCard = styled.div`
-  background-color: ${props => props.theme.colors.cardSurface};
+  background-color: rgba(15, 23, 42, 0.72);
+  backdrop-filter: saturate(120%) blur(6px);
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
   padding: 1rem;
@@ -277,7 +278,8 @@ const KpiGrid = styled.div`
 `;
 
 const KpiCard = styled.div`
-  background-color: ${props => props.theme.colors.cardSurface};
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: saturate(120%) blur(4px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
   padding: 1rem;
@@ -289,8 +291,6 @@ const KpiCard = styled.div`
   box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
   
   &:hover {
-    box-shadow: 0 0 0 2px ${props => props.theme.colors.primary}, 0 8px 24px rgba(0,0,0,.35);
-    // Enhance glow on hover
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 0 2px ${props => props.theme.colors.primary};
   }
   
@@ -415,7 +415,8 @@ const SwipeableChartContainer = styled.div`
 `;
 
 const ChartCard = styled.div`
-  background-color: ${props => props.theme.colors.cardSurface};
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
   padding: 1rem;
@@ -499,7 +500,8 @@ const InsightsRow = styled.div`
 `;
 
 const InsightsCard = styled.div`
-  background-color: ${props => props.theme.colors.cardSurface};
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
   padding: 1rem;
@@ -519,7 +521,6 @@ const InsightsCard = styled.div`
   
   @media (min-width: 768px) {
     padding: 1.5rem;
-    border-radius: 20px;
   }
 `;
 
@@ -824,8 +825,7 @@ const ActivityTime = styled.span`
   }
 `;
 
-const FilterContainer = styled.div`
-  display: flex;
+const FilterContainer = styled.div`  display: flex;
   gap: 0.375rem;
   margin-top: 0.75rem;
   flex-wrap: wrap;
@@ -990,9 +990,20 @@ const CustomLegend = (props: { payload?: Array<{ value: string; color: string }>
 
 export const Dashboard: FC = () => {
   const navigate = useNavigate();
-  // const { user } = useAuth(); // Not used currently
+  // Read authenticated user to personalize greeting
+  const { user } = useAuth();
   const [showNotification, setShowNotification] = useState(true);
   
+  // Derive display name from user metadata or email
+  const getDisplayName = (): string => {
+    const first = (user?.user_metadata as any)?.first_name as string | undefined;
+    const last = (user?.user_metadata as any)?.last_name as string | undefined;
+    if (first) return first;
+    if (last) return last;
+    if (user?.email) return user.email.split('@')[0];
+    return 'there';
+  };
+
   // Function to get personalized welcome message based on day and interview status
   const getWelcomeMessage = () => {
     const today = new Date();
@@ -1056,7 +1067,7 @@ export const Dashboard: FC = () => {
       <WelcomeCard>
         <WelcomeHeader>
           <div>
-            <WelcomeTitle>Welcome back</WelcomeTitle>
+            <WelcomeTitle>Welcome, {getDisplayName()} 👋</WelcomeTitle>
             <WelcomeSubtitle>{getWelcomeMessage()}</WelcomeSubtitle>
           </div>
           <div>
@@ -1154,7 +1165,6 @@ export const Dashboard: FC = () => {
                     itemStyle={{ color: '#FFFFFF' }}
                     labelStyle={{ color: '#FFFFFF' }}
                   />
-                  {/* Removed default Legend and will add custom legend below */}
                   <ReferenceLine 
                     y={10} 
                     stroke="#EF4444" 
@@ -1179,12 +1189,7 @@ export const Dashboard: FC = () => {
               </ResponsiveContainer>
             </div>
           </SwipeableChartContainer>
-          {/* Custom legend for Applications over time chart */}
-          <CustomLegend 
-            payload={[
-              { value: 'Applications', color: '#3B82F6' }
-            ]} 
-          />
+          <CustomLegend payload={[{ value: 'Applications', color: '#3B82F6' }]} />
         </ChartCard>
         
         <ChartCard>
@@ -1214,7 +1219,6 @@ export const Dashboard: FC = () => {
                       fontSize: '12px'
                     }}
                     formatter={(value, name) => {
-                      // Fixed tooltip formatter to correctly display Completed and Pending
                       if (name === 'completed' || name === 'Completed') {
                         return [`${value} tasks`, 'Completed'];
                       } else if (name === 'pending' || name === 'Pending') {
@@ -1232,13 +1236,7 @@ export const Dashboard: FC = () => {
               </ResponsiveContainer>
             </div>
           </SwipeableChartContainer>
-          {/* Placing our custom legend outside the chart to have full control over styling */}
-          <CustomLegend 
-            payload={[
-              { value: 'Completed', color: '#22C55E' },
-              { value: 'Pending', color: '#B0B8C1' }
-            ]} 
-          />
+          <CustomLegend payload={[{ value: 'Completed', color: '#22C55E' }, { value: 'Pending', color: '#B0B8C1' }]} />
         </ChartCard>
       </ChartsRow>
 
