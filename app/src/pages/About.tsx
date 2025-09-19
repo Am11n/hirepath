@@ -5,7 +5,10 @@ import { Footer } from '../components/Footer';
 
 const Wrapper = styled.main`
 	min-height: 100vh;
-	background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+	background:
+		radial-gradient(800px 400px at 20% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
+		radial-gradient(800px 400px at 80% 0%, rgba(148, 163, 184, 0.15), transparent 60%),
+		linear-gradient(180deg, #1f2937 0%, #334155 100%);
 	color: #ffffff;
 	display: flex;
 	flex-direction: column;

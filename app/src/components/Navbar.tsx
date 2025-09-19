@@ -1,15 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import type { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../hooks/useAuth';
+import { useThemeMode } from '../contexts/themeMode';
 
 const Header = styled.header`
 	position: sticky;
 	top: 0;
 	z-index: 10;
 	width: 100%;
-	background: rgba(15, 23, 42, 0.6);
+	background: ${props => props.theme.glass.navbar};
 	backdrop-filter: saturate(120%) blur(6px);
 	color: ${props => props.theme.colors.headings};
 	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
@@ -136,7 +137,7 @@ const SearchSuggestions = styled.div`
 	top: 100%;
 	left: 0;
 	right: 0;
-	background: rgba(15, 23, 42, 0.85);
+	background: ${props => props.theme.glass.dropdown};
 	backdrop-filter: saturate(120%) blur(8px);
 	border: 1px solid ${props => props.theme.colors.borders};
 	border-radius: 8px;
@@ -314,7 +315,7 @@ const Dropdown = styled.div`
 	position: absolute;
 	top: 100%;
 	right: 0;
-	background: rgba(15, 23, 42, 0.85);
+	background: ${props => props.theme.glass.dropdown};
 	backdrop-filter: saturate(120%) blur(8px);
 	color: ${props => props.theme.colors.headings};
 	border: 1px solid ${props => props.theme.colors.borders};
@@ -340,6 +341,32 @@ const Dropdown = styled.div`
 `;
 
 const DropdownItem = styled.a`
+	display: block;
+	text-decoration: none;
+	color: ${props => props.theme.colors.bodyText};
+	padding: 0.75rem;
+	border-radius: 8px;
+	font-size: 0.95rem;
+	
+	@media (max-width: 480px) {
+		padding: 0.6rem;
+		font-size: 0.9rem;
+	}
+	
+	@media (max-width: 320px) {
+		padding: 0.5rem;
+		font-size: 0.85rem;
+	}
+	
+	&:hover,
+	&:focus-visible {
+		background-color: rgba(255, 255, 255, 0.06);
+		outline: none;
+		color: ${props => props.theme.colors.headings};
+	}
+`;
+
+const DropdownLink = styled(Link)`
 	display: block;
 	text-decoration: none;
 	color: ${props => props.theme.colors.bodyText};
@@ -530,6 +557,19 @@ const NotificationBellIcon = () => (
   </svg>
 );
 
+const ThemeToggleIcon = ({ mode }: { mode: 'dark' | 'light' }) => (
+  mode === 'dark' ? (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ) : (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  )
+);
+
 interface NavbarProps {
   onMenuToggle?: () => void;
 }
@@ -546,6 +586,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 	const searchInputRef = useRef<HTMLInputElement>(null); // Add ref for search input
 	const { user, signOut } = useAuth();
 	const navigate = useNavigate();
+	const { mode, toggleMode } = useThemeMode();
 
 	// Close dropdowns when clicking outside
 	useEffect(() => {
@@ -661,6 +702,11 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 				</CenterSection>
 				
 				<RightSection>
+					<IconContainer>
+						<IconButton aria-label="Toggle theme" onClick={toggleMode}>
+							<ThemeToggleIcon mode={mode} />
+						</IconButton>
+					</IconContainer>
 					<IconContainer ref={notificationsRef}>
 						<IconButton 
 							aria-label="Notifications" 
@@ -685,7 +731,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 							</UserAvatar>
 							{userDropdownOpen && (
 								<Dropdown>
-									<DropdownItem href="/settings">Settings</DropdownItem>
+									<DropdownLink to="/profile" onClick={() => setUserDropdownOpen(false)}>Settings</DropdownLink>
 									<Divider />
 									<DropdownItem href="#" onClick={handleSignOut}>Sign out</DropdownItem>
 								</Dropdown>
@@ -704,7 +750,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 							<MobileItem href="/documents">Documents</MobileItem>
 							<MobileItem href="/tasks">Tasks</MobileItem>
 							<MobileItem href="/insights">Insights</MobileItem>
-							<MobileItem href="/settings">Settings</MobileItem>
+							<MobileItem href="/profile">Settings</MobileItem>
 						</>
 					) : (
 						<>

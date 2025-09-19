@@ -18,6 +18,13 @@ const Container = styled.div`
 	padding: 2rem 1rem 3rem 1rem;
 `;
 
+const ContentBackground = styled.section`
+	background:
+		radial-gradient(800px 400px at 20% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
+		radial-gradient(800px 400px at 80% 0%, rgba(148, 163, 184, 0.15), transparent 60%),
+		linear-gradient(180deg, #1f2937 0%, #334155 100%);
+`;
+
 const HeroSection = styled.section`
 	text-align: center;
 	padding: 2rem 1rem 3rem 1rem;
@@ -173,8 +180,8 @@ const CategoryDesc = styled.p`
 `;
 
 const CTASection = styled.section`
-	background: rgba(67, 56, 202, 0.15);
-	border: 1px solid rgba(129, 140, 248, 0.3);
+	background: transparent;
+	border: none;
 	border-radius: 16px;
 	padding: 2.5rem;
 	text-align: center;
@@ -240,7 +247,7 @@ export const Blog: FC = () => {
 			date: 'Mar 19, 2023',
 		},
 	];
-
+	
 	const categories = [
 		{
 			title: 'Job Applications',
@@ -259,57 +266,59 @@ export const Blog: FC = () => {
 			description: 'Personal branding, networking, and professional development.',
 		},
 	];
-
+	
 	return (
 		<Page>
 			<PublicNavbar />
-			<Container>
-				<HeroSection>
-					<HeroTitle>Blog</HeroTitle>
-					<HeroText>Explore our best advice on resumes, applications, interviews, and career growth.</HeroText>
-				</HeroSection>
+			<ContentBackground>
+				<Container>
+					<HeroSection>
+						<HeroTitle>Blog</HeroTitle>
+						<HeroText>Explore our best advice on resumes, applications, interviews, and career growth.</HeroText>
+					</HeroSection>
 
-				<CategoriesSection>
-					<SectionTitle>Categories</SectionTitle>
-					<CategoriesGrid>
-						{categories.map((category, index) => (
-							<CategoryCard 
-								key={index} 
-								$active={activeCategory === index}
-								onClick={() => setActiveCategory(index)}
-							>
-								<CategoryTitle>{category.title}</CategoryTitle>
-								<CategoryDesc>{category.description}</CategoryDesc>
-							</CategoryCard>
-						))}
-					</CategoriesGrid>
-				</CategoriesSection>
+					<CategoriesSection>
+						<SectionTitle>Categories</SectionTitle>
+						<CategoriesGrid>
+							{categories.map((category, index) => (
+								<CategoryCard 
+									key={index} 
+									$active={activeCategory === index}
+									onClick={() => setActiveCategory(index)}
+								>
+									<CategoryTitle>{category.title}</CategoryTitle>
+									<CategoryDesc>{category.description}</CategoryDesc>
+								</CategoryCard>
+							))}
+						</CategoriesGrid>
+					</CategoriesSection>
 
-				<Section>
-					<SectionTitle>Featured Articles</SectionTitle>
-					<ArticlesGrid>
-						{articles.map((article, index) => (
-							<ArticleCard key={index}>
-								<ArticleImage>{article.icon}</ArticleImage>
-								<ArticleTitle>{article.title}</ArticleTitle>
-								<ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
-								<ArticleMeta>
-									<AuthorAvatar>{article.author.charAt(0)}</AuthorAvatar>
-									<AuthorInfo>
-										<AuthorName>{article.author}</AuthorName> • {article.date}
-									</AuthorInfo>
-								</ArticleMeta>
-								<ReadMoreLink href="#">Read more</ReadMoreLink>
-							</ArticleCard>
-						))}
-					</ArticlesGrid>
-				</Section>
+					<Section>
+						<SectionTitle>Featured Articles</SectionTitle>
+						<ArticlesGrid>
+							{articles.map((article, index) => (
+								<ArticleCard key={index}>
+									<ArticleImage>{article.icon}</ArticleImage>
+									<ArticleTitle>{article.title}</ArticleTitle>
+									<ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
+									<ArticleMeta>
+										<AuthorAvatar>{article.author.charAt(0)}</AuthorAvatar>
+										<AuthorInfo>
+											<AuthorName>{article.author}</AuthorName> • {article.date}
+										</AuthorInfo>
+									</ArticleMeta>
+									<ReadMoreLink href="#">Read more</ReadMoreLink>
+								</ArticleCard>
+							))}
+						</ArticlesGrid>
+					</Section>
 
-				<CTASection>
-					<CTATitle>Ready to put these tips into action?</CTATitle>
-					<CTAButton href="/signup">Create Your Free HirePath Account</CTAButton>
-				</CTASection>
-			</Container>
+					<CTASection>
+						<CTATitle>Ready to put these tips into action?</CTATitle>
+						<CTAButton href="/signup">Create Your Free HirePath Account</CTAButton>
+					</CTASection>
+				</Container>
+			</ContentBackground>
 			<Footer />
 		</Page>
 	);

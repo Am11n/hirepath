@@ -108,29 +108,14 @@ const NotificationClose = styled.button`
 `;
 
 const WelcomeCard = styled.div`
-  background-color: rgba(15, 23, 42, 0.72);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(6px);
   border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
   padding: 1rem;
   margin-bottom: 1rem;
   position: relative;
   overflow: hidden;
-  
-  // Add neon glow effect
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
-    // Add subtle glow to the gradient line
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-  }
   
   /* Improve mobile responsiveness for small screens */
   @media (max-width: 360px) {
@@ -278,7 +263,7 @@ const KpiGrid = styled.div`
 `;
 
 const KpiCard = styled.div`
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(4px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
@@ -415,7 +400,7 @@ const SwipeableChartContainer = styled.div`
 `;
 
 const ChartCard = styled.div`
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
@@ -500,7 +485,7 @@ const InsightsRow = styled.div`
 `;
 
 const InsightsCard = styled.div`
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
@@ -935,15 +920,14 @@ const CommunicationActivityIcon = () => (
   </svg>
 );
 
-// Styled component for legend text to ensure white color
+// Styled component for legend text — theme-aware for readability on light backgrounds
 const LegendText = styled.span`
-  color: #FFFFFF !important;
+  color: ${props => props.theme.colors.headings} !important;
   font-size: 12px;
   font-weight: 500;
   font-family: inherit;
-  text-shadow: 0 0 1px rgba(0,0,0,0.5);
+  text-shadow: none;
   
-  /* Improve mobile responsiveness for small screens */
   @media (max-width: 360px) {
     font-size: 10px;
   }
@@ -996,8 +980,9 @@ export const Dashboard: FC = () => {
   
   // Derive display name from user metadata or email
   const getDisplayName = (): string => {
-    const first = (user?.user_metadata as any)?.first_name as string | undefined;
-    const last = (user?.user_metadata as any)?.last_name as string | undefined;
+    const metadata = user?.user_metadata as Record<string, unknown> | undefined;
+    const first = typeof metadata?.first_name === 'string' ? metadata.first_name : undefined;
+    const last = typeof metadata?.last_name === 'string' ? metadata.last_name : undefined;
     if (first) return first;
     if (last) return last;
     if (user?.email) return user.email.split('@')[0];

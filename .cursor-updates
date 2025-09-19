@@ -1,0 +1,4 @@
+- Updated public navbar logo to `Vanlig uten bakgrunn-HirePath (1).png`, preserving size.
+- Changed footer background to a light blue-grey gradient for a softer look.
+- Removed `any` types in dashboard display name logic to satisfy lint rules.
+- Lint and production build succeeded (`pnpm lint`, `pnpm build`). 

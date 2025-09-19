@@ -1,8 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { ThemeProvider } from 'styled-components'
-import { theme } from './styles/theme'
 import { GlobalStyle } from './styles/global'
 import './index.css'
 import App from './App'
@@ -22,6 +20,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { Search } from './pages/Search'
+import { ThemeModeProvider } from './contexts/ThemeModeProvider'
 
 // Protected routes that use AppLayout
 const protectedRoutes = [
@@ -105,11 +104,11 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider theme={theme}>
+    <ThemeModeProvider>
       <GlobalStyle />
       <AuthProvider>
         <RouterProvider router={router} />
       </AuthProvider>
-    </ThemeProvider>
+    </ThemeModeProvider>
   </StrictMode>,
 )

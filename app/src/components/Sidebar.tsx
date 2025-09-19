@@ -1,10 +1,11 @@
 import type { FC } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useThemeMode } from '../contexts/themeMode';
 
 const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>`
   width: ${props => props.$collapsed ? '70px' : '250px'};
-  background-color: rgba(15, 23, 42, 0.6);
+  background-color: ${props => props.theme.glass.sidebar};
   backdrop-filter: saturate(120%) blur(6px);
   color: ${props => props.theme.colors.bodyText};
   height: 100vh;
@@ -22,7 +23,7 @@ const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>
   @media (max-width: 640px) {
     display: ${props => props.$isOpen ? 'flex' : 'none'};
     width: 100%;
-    background-color: rgba(15, 23, 42, 0.85);
+    background-color: ${props => props.theme.glass.drawer};
     backdrop-filter: saturate(120%) blur(8px);
   }
   
@@ -30,7 +31,7 @@ const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>
   @media (min-width: 641px) and (max-width: 1024px) {
     display: ${props => props.$isOpen ? 'flex' : 'none'};
     width: 320px;
-    background-color: rgba(15, 23, 42, 0.6);
+    background-color: ${props => props.theme.glass.sidebar};
     backdrop-filter: saturate(120%) blur(6px);
     box-shadow: 10px 0 30px rgba(0,0,0,0.35);
   }
@@ -207,11 +208,6 @@ const InsightsIcon = () => (
   </svg>
 );
 
-const ProfileIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
 
 const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16">
@@ -238,6 +234,7 @@ export const Sidebar: FC<SidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { mode } = useThemeMode();
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
@@ -245,7 +242,6 @@ export const Sidebar: FC<SidebarProps> = ({
     { name: 'Tasks', path: '/tasks', icon: <TasksIcon /> },
     { name: 'Documents', path: '/documents', icon: <DocumentsIcon /> },
     { name: 'Insights', path: '/insights', icon: <InsightsIcon /> },
-    { name: 'Profile', path: '/profile', icon: <ProfileIcon /> },
   ];
 
   const handleCollapseToggle = () => {
@@ -258,10 +254,14 @@ export const Sidebar: FC<SidebarProps> = ({
     }
   };
 
+  const expandedLogoSrc = mode === 'light'
+    ? encodeURI('/images/Logo med tekst(FOR LYS).svg')
+    : '/HirePath-ForMørkBakgrunn (1).png';
+
   return (
     <SidebarContainer $isOpen={isOpen} $collapsed={collapsed}>
       <LogoContainer $collapsed={collapsed}>
-        <Logo src="/HirePath-ForMørkBakgrunn (1).png" alt="HirePath" />
+        <Logo src={expandedLogoSrc} alt="HirePath" />
       </LogoContainer>
       
       {collapsed && (

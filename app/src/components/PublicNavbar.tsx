@@ -8,7 +8,7 @@ const Header = styled.header`
   top: 0;
   z-index: 10;
   width: 100%;
-  background: #FAFAFA;
+  background: linear-gradient(180deg, #a9ccd9 0%, #dbe2e8 60%, #c7d0d8 100%);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
 `;
@@ -156,7 +156,7 @@ const MobileMenu = styled.div<{ isOpen: boolean }>`
   top: 100%;
   left: 0;
   right: 0;
-  background: #FAFAFA;
+  background: linear-gradient(180deg, #a9ccd9 0%, #dbe2e8 60%, #c7d0d8 100%);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 0.75rem;
   display: ${props => props.isOpen ? 'block' : 'none'};
@@ -260,7 +260,7 @@ export const PublicNavbar: FC = () => {
     <Header>
       <Nav aria-label="Primary">
         <BrandLink to="/" aria-label="HirePath home" onClick={closeMenu}>
-          <BrandImg src="/logo-hirepath-wide.png" alt="HirePath" />
+          <BrandImg src={encodeURI('/Vanlig uten bakgrunn-HirePath (1).png')} alt="HirePath" />
         </BrandLink>
         
         <NavList role="list">
