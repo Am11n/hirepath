@@ -33,7 +33,7 @@ const Header = styled.h1`
 `;
 
 const UploadArea = styled.div`
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(6px);
   border: 2px dashed ${props => props.theme.colors.borders};
   border-radius: 16px;
@@ -150,7 +150,7 @@ const UploadButton = styled.button`
 `;
 
 const DocumentsListContainer = styled.div`
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
@@ -379,7 +379,7 @@ const MobileDocumentsList = styled.div`
 `;
 
 const DocumentCard = styled.div`
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(6px);
   border-radius: 12px;
   padding: 1rem;
@@ -458,7 +458,7 @@ const DocumentDetailValue = styled.span`
 `;
 
 const EmptyStateContainer = styled.div`
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: ${props => props.theme.glass.card};
   backdrop-filter: saturate(120%) blur(6px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);

@@ -194,7 +194,7 @@ const ShowcaseBleed = styled.div`
 
 const BottomCTA = styled.section`
 	padding: 3rem 1rem 3rem 1rem;
-	background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+	background: transparent; /* inherit ContentBackground gradient */
 `;
 
 const BottomCTAInner = styled.div`
@@ -222,6 +222,14 @@ const BottomButton = styled.a`
 	font-weight: 600;
 	:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
 	:hover { background: #3730a3; }
+`;
+
+const ContentBackground = styled.section`
+	/* Blue‑grey gradient background with subtle blue glow */
+	background:
+		radial-gradient(800px 400px at 20% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
+		radial-gradient(800px 400px at 80% 0%, rgba(148, 163, 184, 0.15), transparent 60%),
+		linear-gradient(180deg, #1f2937 0%, #334155 100%);
 `;
 
 export const Home: FC = () => {
@@ -257,39 +265,42 @@ export const Home: FC = () => {
 					</HeroInner>
 				</HeroContent>
 			</Hero>
-			<Container>
-				<Intro aria-labelledby="intro-title">
-					<IntroTitle id="intro-title">Your clear path from application to job.</IntroTitle>
-					<IntroText>
-						Tired of messy spreadsheets and scattered documents? HirePath helps you track applications, organize tasks, and manage CVs and cover letters — all in one simple dashboard. From the first application to your next job offer, HirePath gives you structure, clarity, and confidence every step of the way.
-					</IntroText>
-				</Intro>
-				<FeaturesSection id="features" aria-label="Key features">
-					<FeaturesGrid>
-						{features.map((f) => (
-							<FeatureCard key={f.title}>
-								<FeatureIcon aria-hidden="true">{f.icon}</FeatureIcon>
-								<FeatureTitle>{f.title}</FeatureTitle>
-								<FeatureDesc>{f.desc}</FeatureDesc>
-							</FeatureCard>
-						))}
-					</FeaturesGrid>
-				</FeaturesSection>
+			<ContentBackground>
+				<Container>
+					<Intro aria-labelledby="intro-title">
+						<IntroTitle id="intro-title">Your clear path from application to job.</IntroTitle>
+						<IntroText>
+							Tired of messy spreadsheets and scattered documents? HirePath helps you track applications, organize tasks, and manage CVs and cover letters — all in one simple dashboard. From the first application to your next job offer, HirePath gives you structure, clarity, and confidence every step of the way.
+						</IntroText>
+					</Intro>
+					<FeaturesSection id="features" aria-label="Key features">
+						<FeaturesGrid>
+							{features.map((f) => (
+								<FeatureCard key={f.title}>
+									<FeatureIcon aria-hidden="true">{f.icon}</FeatureIcon>
+									<FeatureTitle>{f.title}</FeatureTitle>
+									<FeatureDesc>{f.desc}</FeatureDesc>
+								</FeatureCard>
+							))}
+						</FeaturesGrid>
+					</FeaturesSection>
 
-				<ShowcaseSection aria-label="Showcase">
-					<ShowcaseTitle>Showcase</ShowcaseTitle>
-					<ShowcaseBleed>
-						<ShowcaseImage src={encodeURI('/Showcase-bilde.svg')} alt="HirePath showcase" />
-					</ShowcaseBleed>
-				</ShowcaseSection>
-			</Container>
+					<ShowcaseSection aria-label="Showcase">
+						<ShowcaseTitle>Showcase</ShowcaseTitle>
+						<ShowcaseBleed>
+							<ShowcaseImage src={encodeURI('/images/Nyeste-Showcase-bilde.svg')} alt="HirePath showcase" />
+						</ShowcaseBleed>
+					</ShowcaseSection>
 
-			<BottomCTA aria-labelledby="cta-bottom-title">
-				<BottomCTAInner>
-					<BottomHeading id="cta-bottom-title">Ready to organize your job search?</BottomHeading>
-					<BottomButton href="/signup" aria-label="Create Your Free Account">Create Your Free Account</BottomButton>
-				</BottomCTAInner>
-			</BottomCTA>
+					{/* Moved CTA directly below the showcase */}
+					<BottomCTA aria-labelledby="cta-bottom-title">
+						<BottomCTAInner>
+							<BottomHeading id="cta-bottom-title">Ready to organize your job search?</BottomHeading>
+							<BottomButton href="/signup" aria-label="Create Your Free Account">Create Your Free Account</BottomButton>
+						</BottomCTAInner>
+					</BottomCTA>
+				</Container>
+			</ContentBackground>
 
 			<Footer />
 		</Page>
