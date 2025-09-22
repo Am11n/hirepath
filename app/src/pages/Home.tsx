@@ -9,6 +9,7 @@ const Page = styled.main`
 	color: #ffffff;
 	display: flex;
 	flex-direction: column;
+	overflow-x: hidden; /* prevent horizontal scroll on mobile */
 `;
 
 const Container = styled.div`
@@ -186,9 +187,8 @@ const ShowcaseImage = styled.img`
 `;
 
 const ShowcaseBleed = styled.div`
-	width: min(1600px, 100vw);
-	margin-left: 50%;
-	transform: translateX(-50%);
+	width: min(1600px, 100%);
+	margin: 0 auto;
 	padding: 0 1rem;
 `;
 

@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -7,7 +7,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, ReferenceLine, Label
 } from 'recharts';
-import { kpiData, applicationsOverTimeData, tasksCompletedData, upcomingReminders, followUpsNeeded, recentActivity } from '../data/mock';
+import { supabase } from '../lib/supabaseClient';
 
 // Define types for our data structures (removed unused types)
 
@@ -978,11 +978,238 @@ export const Dashboard: FC = () => {
   const { user } = useAuth();
   const [showNotification, setShowNotification] = useState(true);
   
+  // Supabase-backed dashboard state
+  const [kpiData, setKpiData] = useState({
+    applicationsSubmitted: { value: 0, change: '', changePositive: true },
+    interviewsScheduled: { value: 0, change: '', changePositive: true },
+    documentsUploaded: { value: 0, change: '', changePositive: true },
+    successRate: { value: 0, change: '', changePositive: true },
+  });
+  const [applicationsOverTimeData, setApplicationsOverTimeData] = useState<Array<{ week: string; applications: number }>>([]);
+  const [tasksCompletedData, setTasksCompletedData] = useState<Array<{ week: string; completed: number; pending: number }>>([]);
+  const [upcomingReminders, setUpcomingReminders] = useState<Array<{ id: string; title: string; time: string; status: 'upcoming' | 'soon' | 'overdue' }>>([]);
+  const [followUpsNeeded, setFollowUpsNeeded] = useState<Array<{ id: string; company: string; lastContact: string }>>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{ id: string; type: string; action: string; time: string }>>([]);
+  const [nextInterviewDate, setNextInterviewDate] = useState<string | null>(null);
+  const [hasOfferToday, setHasOfferToday] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const formatDate = (d: Date) => {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    const getWeekStart = (d: Date) => {
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const day = date.getUTCDay(); // 0 Sun - 6 Sat
+      const diff = (day === 0 ? -6 : 1) - day; // move to Monday
+      const monday = new Date(date);
+      monday.setUTCDate(date.getUTCDate() + diff);
+      return formatDate(monday); // label by Monday date
+    };
+
+    const load = async () => {
+      // 1) KPIs (with status fallbacks)
+      const [appsCountRes, interviewsCountRes, docsCountRes, offersCountRes] = await Promise.all([
+        supabase
+          .from('job_applications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+        supabase
+          .from('job_applications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .or('status.eq.Interview,interview_date.not.is.null'),
+        supabase
+          .from('documents')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+        supabase
+          .from('job_applications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .or('status.eq.Offer,offer_date.not.is.null'),
+      ]);
+
+      const totalApps = appsCountRes.count || 0;
+      const interviews = interviewsCountRes.count || 0;
+      const documents = docsCountRes.count || 0;
+      const offers = offersCountRes.count || 0;
+      const successRate = totalApps > 0 ? Math.round((offers / totalApps) * 100) : 0;
+
+      setKpiData({
+        applicationsSubmitted: { value: totalApps, change: '', changePositive: true },
+        interviewsScheduled: { value: interviews, change: '', changePositive: true },
+        documentsUploaded: { value: documents, change: '', changePositive: true },
+        successRate: { value: successRate, change: '', changePositive: true },
+      });
+
+      // Next interview date (nearest future; include those scheduled today)
+      const now = new Date();
+      const todayStr = formatDate(now);
+      const { data: appsForInterview } = await supabase
+        .from('job_applications')
+        .select('interview_date, status')
+        .eq('user_id', user.id);
+      let next: string | null = null;
+      (appsForInterview || []).forEach(r => {
+        if (r.interview_date) {
+          const dt = new Date(r.interview_date);
+          if (dt >= now) {
+            if (!next || dt < new Date(next)) next = dt.toISOString();
+          }
+        }
+      });
+      // Fallback: status Interview without date => treat as today
+      if (!next && (appsForInterview || []).some(r => r.status === 'Interview')) {
+        next = now.toISOString();
+      }
+      setNextInterviewDate(next);
+
+      // Offer today (either offer_date = today or status Offer updated today)
+      const { data: offersToday } = await supabase
+        .from('job_applications')
+        .select('offer_date, status, updated_at')
+        .eq('user_id', user.id)
+        .or('offer_date.eq.' + todayStr + ',status.eq.Offer');
+      const hasToday = (offersToday || []).some(r => (r.offer_date && r.offer_date === todayStr) || r.status === 'Offer');
+      setHasOfferToday(hasToday);
+
+      // 2) Applications over time (last 8 weeks by applied_date)
+      const eightWeeksAgo = new Date();
+      eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 7 * 8);
+      const { data: appsDates } = await supabase
+        .from('job_applications')
+        .select('applied_date')
+        .eq('user_id', user.id)
+        .gte('applied_date', formatDate(eightWeeksAgo));
+
+      const byWeek: Record<string, number> = {};
+      for (let i = 7; i >= 0; i--) {
+        const dt = new Date();
+        dt.setDate(dt.getDate() - i * 7);
+        const wk = getWeekStart(dt);
+        byWeek[wk] = 0;
+      }
+      (appsDates || []).forEach(r => {
+        if (!r.applied_date) return;
+        const wk = getWeekStart(new Date(r.applied_date));
+        if (byWeek[wk] !== undefined) byWeek[wk] += 1;
+      });
+      const appsOver = Object.entries(byWeek).map(([week, applications]) => ({ week, applications }));
+      setApplicationsOverTimeData(appsOver);
+
+      // 3) Tasks completed vs pending (last 8 weeks)
+      const { data: tasks } = await supabase
+        .from('activities')
+        .select('completed, created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', eightWeeksAgo.toISOString());
+
+      const weekAgg: Record<string, { completed: number; pending: number }> = {};
+      for (let i = 7; i >= 0; i--) {
+        const dt = new Date();
+        dt.setDate(dt.getDate() - i * 7);
+        const wk = getWeekStart(dt);
+        weekAgg[wk] = { completed: 0, pending: 0 };
+      }
+      (tasks || []).forEach(t => {
+        const d = new Date(t.created_at);
+        const wk = getWeekStart(d);
+        if (weekAgg[wk]) {
+          if (t.completed) weekAgg[wk].completed += 1; else weekAgg[wk].pending += 1;
+        }
+      });
+      setTasksCompletedData(Object.entries(weekAgg).map(([week, v]) => ({ week, completed: v.completed, pending: v.pending })));
+
+      // 4) Upcoming reminders and follow-ups and recent activity remain as is
+      const todayStr2 = formatDate(new Date());
+      const { data: upcomingActs } = await supabase
+        .from('activities')
+        .select('id, title, due_date')
+        .eq('user_id', user.id)
+        .eq('completed', false)
+        .gte('due_date', todayStr2)
+        .order('due_date', { ascending: true })
+        .limit(5);
+
+      setUpcomingReminders(
+        (upcomingActs || []).map(r => ({
+          id: r.id,
+          title: r.title,
+          time: r.due_date ? new Date(r.due_date).toLocaleDateString() : 'Soon',
+          status: 'upcoming',
+        }))
+      );
+
+      // 5) Follow-ups Needed (overdue incomplete, enrich with company)
+      const { data: overdue } = await supabase
+        .from('activities')
+        .select('id, job_application_id, due_date')
+        .eq('user_id', user.id)
+        .eq('completed', false)
+        .lt('due_date', todayStr2)
+        .order('due_date', { ascending: true })
+        .limit(5);
+
+      let followUpOut: Array<{ id: string; company: string; lastContact: string }> = [];
+      if (overdue && overdue.length > 0) {
+        const appIds = Array.from(new Set(overdue.map(o => o.job_application_id).filter(Boolean)));
+        const appMap = new Map<string, string>();
+        if (appIds.length > 0) {
+          const { data: apps } = await supabase
+            .from('job_applications')
+            .select('id, company_name')
+            .eq('user_id', user.id)
+            .in('id', appIds as string[]);
+          if (apps) {
+            for (const a of apps) appMap.set(a.id, a.company_name);
+          }
+        }
+        followUpOut = overdue.map(o => ({
+          id: o.id,
+          company: (o.job_application_id && appMap.get(o.job_application_id)) || 'Application',
+          lastContact: o.due_date ? new Date(o.due_date).toLocaleDateString() : '-',
+        }));
+      }
+      setFollowUpsNeeded(followUpOut);
+
+      // 6) Recent Activity (mix documents and activities by created_at)
+      const [recentActsRes, recentDocsRes] = await Promise.all([
+        supabase.from('activities').select('id, created_at, type, title').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('documents').select('id, created_at, name').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+      ]);
+
+      type Entry = { id: string; created_at: string; type: string; action: string };
+      const actEntries: Entry[] = (recentActsRes.data || []).map(a => ({ id: a.id, created_at: a.created_at, type: a.type || 'application', action: a.title }));
+      const docEntries: Entry[] = (recentDocsRes.data || []).map(d => ({ id: d.id, created_at: d.created_at, type: 'document', action: `Uploaded ${d.name}` }));
+      const merged = [...actEntries, ...docEntries].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
+      setRecentActivity(merged.map(m => ({ id: m.id, type: m.type, action: m.action, time: new Date(m.created_at).toLocaleString() })));
+    };
+
+    load();
+
+    // Realtime refresh for KPI updates when job_applications change
+    const channel = supabase
+      .channel(`dashboard-apps-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'job_applications', filter: `user_id=eq.${user.id}` }, () => {
+        load();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   // Derive display name from user metadata or email
   const getDisplayName = (): string => {
-    const metadata = user?.user_metadata as Record<string, unknown> | undefined;
-    const first = typeof metadata?.first_name === 'string' ? metadata.first_name : undefined;
-    const last = typeof metadata?.last_name === 'string' ? metadata.last_name : undefined;
+    const meta = (user?.user_metadata as Record<string, unknown>) || {};
+    const first = typeof meta.first_name === 'string' ? meta.first_name : undefined;
+    const last = typeof meta.last_name === 'string' ? meta.last_name : undefined;
     if (first) return first;
     if (last) return last;
     if (user?.email) return user.email.split('@')[0];
@@ -992,23 +1219,14 @@ export const Dashboard: FC = () => {
   // Function to get personalized welcome message based on day and interview status
   const getWelcomeMessage = () => {
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
-    
-    // Check if there's an interview today (in a real app, this would come from the database)
-    // For demo purposes, let's check if today is Tuesday (matching the "Next interview: Tue 10:30")
-    const hasInterviewToday = dayOfWeek === 2; // Tuesday
-    
-    if (hasInterviewToday) {
-      return "Good luck with your meeting today!";
+    const dayOfWeek = today.getDay();
+    if (nextInterviewDate) {
+      return 'You have an upcoming interview.';
     }
-    
     switch (dayOfWeek) {
-      case 1: // Monday
-        return "Plan your week ahead.";
-      case 5: // Friday
-        return "3 reminders before the weekend.";
-      default:
-        return "Here's your job search overview.";
+      case 1: return 'Plan your week ahead.';
+      case 5: return '3 reminders before the weekend.';
+      default: return "Here's your job search overview.";
     }
   };
 
@@ -1036,16 +1254,16 @@ export const Dashboard: FC = () => {
 
   return (
     <DashboardContainer>
-      {/* Add notification banner */}
-      {showNotification && (
+      {/* Notification banner shown only if there is at least one upcoming interview or an offer today */}
+      {(nextInterviewDate || hasOfferToday) && showNotification && (
         <NotificationBanner>
           <NotificationContent>
             <NotificationIcon>🔔</NotificationIcon>
-            <NotificationText>3 new interview invitations received today!</NotificationText>
+            <NotificationText>
+              {hasOfferToday ? 'You received a job offer!' : 'You have upcoming interviews'}
+            </NotificationText>
           </NotificationContent>
-          <NotificationClose onClick={() => setShowNotification(false)}>
-            ×
-          </NotificationClose>
+          <NotificationClose onClick={() => setShowNotification(false)}>×</NotificationClose>
         </NotificationBanner>
       )}
 
@@ -1056,14 +1274,14 @@ export const Dashboard: FC = () => {
             <WelcomeSubtitle>{getWelcomeMessage()}</WelcomeSubtitle>
           </div>
           <div>
-            <NextInterviewPill>Next interview: Tue 10:30</NextInterviewPill>
-            <InterviewDetailsLink href="#" onClick={(e) => {
-              e.preventDefault();
-              // In a real app, this would open the interview in a calendar
-              alert('Opening interview details in calendar...');
-            }}>
-              View details →
-            </InterviewDetailsLink>
+            {nextInterviewDate && (
+              <>
+                <NextInterviewPill>Next interview: {new Date(nextInterviewDate).toLocaleDateString()}</NextInterviewPill>
+                <InterviewDetailsLink href="#" onClick={(e) => { e.preventDefault(); alert('Opening interview details in calendar...'); }}>
+                  View details →
+                </InterviewDetailsLink>
+              </>
+            )}
           </div>
         </WelcomeHeader>
       </WelcomeCard>
