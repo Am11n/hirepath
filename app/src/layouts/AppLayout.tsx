@@ -8,6 +8,7 @@ import { useLocation } from 'react-router-dom';
 const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
+  overflow-x: hidden; /* prevent horizontal scroll on mobile */
   background: radial-gradient(900px 500px at 15% 0%, ${props => props.theme.gradients.primaryGlow}, transparent 60%),
               radial-gradient(800px 450px at 85% 0%, ${props => props.theme.gradients.secondaryGlow}, transparent 60%),
               linear-gradient(180deg, ${props => props.theme.gradients.baseStart} 0%, ${props => props.theme.gradients.baseMid} 50%, ${props => props.theme.gradients.baseEnd} 100%);
@@ -19,6 +20,7 @@ const MainContent = styled.main<{ $sidebarCollapsed?: boolean; $sidebarOpen?: bo
   flex-direction: column;
   margin-left: ${props => props.$sidebarCollapsed ? '70px' : '250px'}; // Width of the sidebar
   transition: margin-left 0.3s ease;
+  overflow-x: hidden; /* ensure children don't cause horizontal scroll */
   
   @media (max-width: 1024px) {
     margin-left: 0; // default on mobile/tablet
@@ -33,6 +35,8 @@ const MainContent = styled.main<{ $sidebarCollapsed?: boolean; $sidebarOpen?: bo
 const ContentWrapper = styled.div`
   flex: 1;
   padding: 1rem;
+  width: 100%;
+  box-sizing: border-box;
   
   @media (min-width: 768px) {
     padding: 2rem;

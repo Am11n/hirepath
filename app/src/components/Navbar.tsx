@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../hooks/useAuth';
 import { useThemeMode } from '../contexts/themeMode';
+import { supabase } from '../lib/supabaseClient';
 
 const Header = styled.header`
 	position: sticky;
@@ -62,15 +63,22 @@ const CenterSection = styled.div`
 const RightSection = styled.div`
 	display: flex;
 	align-items: center;
-	gap: 1.5rem;
+	gap: 0.75rem;
 	flex: 1;
 	justify-content: flex-end;
 	
 	@media (max-width: 640px) {
 		order: 3;
 		flex: 0 0 auto;
-		gap: 1rem;
+		gap: 0.75rem; /* spacing between icon group and user */
+		margin-left: auto; /* push icons to the far right */
 	}
+`;
+
+const IconGroup = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 0.25rem; /* tighter spacing between theme and notifications */
 `;
 
 const SearchContainer = styled.div`
@@ -85,18 +93,18 @@ const SearchContainer = styled.div`
 	}
 	
 	@media (max-width: 640px) {
-		min-width: 150px;
-		max-width: 200px;
+		min-width: 140px;
+		max-width: 140px; /* give more room for the icon cluster */
 	}
 	
 	@media (max-width: 480px) {
-		min-width: 120px;
-		max-width: 150px;
+		min-width: 130px;
+		max-width: 130px;
 	}
 	
 	@media (max-width: 320px) {
-		min-width: 100px;
-		max-width: 120px;
+		min-width: 110px;
+		max-width: 110px;
 	}
 `;
 
@@ -279,11 +287,11 @@ const NotificationBadge = styled.span`
 	}
 `;
 
-const UserAvatar = styled.div`
+const UserAvatar = styled.div<{ $hasImage?: boolean }>`
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
+	background: ${props => props.$hasImage ? 'transparent' : `linear-gradient(90deg, ${props.theme.colors.primary}, ${props.theme.colors.secondary})`};
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -291,6 +299,7 @@ const UserAvatar = styled.div`
 	font-weight: 600;
 	font-size: 0.9rem;
 	cursor: pointer;
+	overflow: hidden;
 	
 	@media (max-width: 768px) {
 		width: 30px;
@@ -570,6 +579,13 @@ const ThemeToggleIcon = ({ mode }: { mode: 'dark' | 'light' }) => (
   )
 );
 
+type NotificationItem = {
+  id: string;
+  type: 'application' | 'interview' | 'offer' | 'rejected' | 'document' | 'activity';
+  title: string;
+  createdAt: string;
+};
+
 interface NavbarProps {
   onMenuToggle?: () => void;
 }
@@ -587,6 +603,100 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 	const { user, signOut } = useAuth();
 	const navigate = useNavigate();
 	const { mode, toggleMode } = useThemeMode();
+
+	const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+	const [unreadCount, setUnreadCount] = useState<number>(0);
+
+	const loadNotifications = async () => {
+		if (!user) return;
+		const lastSeenRaw = localStorage.getItem('notifications:lastSeen');
+		const lastSeen = lastSeenRaw ? new Date(lastSeenRaw).toISOString() : '1970-01-01T00:00:00.000Z';
+
+		// Documents
+		const { data: docs } = await supabase
+			.from('documents')
+			.select('id, name, created_at')
+			.eq('user_id', user.id)
+			.order('created_at', { ascending: false })
+			.limit(10);
+
+		// Activities (tasks)
+		const { data: acts } = await supabase
+			.from('activities')
+			.select('id, title, created_at')
+			.eq('user_id', user.id)
+			.order('created_at', { ascending: false })
+			.limit(10);
+
+		// Applications (status/date changes). We infer most recent change timestamp
+		const { data: apps } = await supabase
+			.from('job_applications')
+			.select('id, company_name, position, status, applied_date, interview_date, offer_date, rejected_date, created_at, updated_at')
+			.eq('user_id', user.id)
+			.order('updated_at', { ascending: false })
+			.limit(15);
+
+		const appEvents: NotificationItem[] = (apps || []).map(a => {
+			const dates: Array<[string, string]> = [];
+			if (a.offer_date) dates.push(['offer', a.offer_date]);
+			if (a.rejected_date) dates.push(['rejected', a.rejected_date]);
+			if (a.interview_date) dates.push(['interview', a.interview_date]);
+			if (a.applied_date) dates.push(['application', a.applied_date]);
+			const updated = a.updated_at || a.created_at || (a.applied_date ?? null);
+			let type: NotificationItem['type'] = 'application';
+			let createdAt = updated || new Date().toISOString();
+			if (dates.length > 0) {
+				const latest = dates
+					.filter(([, d]) => !!d)
+					.sort(([, d1], [, d2]) => new Date(d2).getTime() - new Date(d1).getTime())[0];
+				if (latest) {
+					type = latest[0] as NotificationItem['type'];
+					createdAt = latest[1];
+				}
+			}
+			const company = a.company_name || 'Application';
+			const role = a.position ? ` – ${a.position}` : '';
+			const title =
+				type === 'offer' ? `Offer from ${company}${role}` :
+				type === 'rejected' ? `Rejected at ${company}${role}` :
+				type === 'interview' ? `Interview scheduled at ${company}${role}` :
+				`Applied to ${company}${role}`;
+			return { id: a.id, type, title, createdAt };
+		});
+
+		const docEvents: NotificationItem[] = (docs || []).map(d => ({ id: d.id, type: 'document', title: `Uploaded ${d.name}`, createdAt: d.created_at }));
+		const actEvents: NotificationItem[] = (acts || []).map(a => ({ id: a.id, type: 'activity', title: a.title || 'New activity', createdAt: a.created_at }));
+
+		const merged = [...appEvents, ...docEvents, ...actEvents]
+			.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+			.slice(0, 12);
+		setNotifications(merged);
+		setUnreadCount(merged.filter(n => n.createdAt > lastSeen).length);
+	};
+
+	useEffect(() => {
+		if (!user) return;
+		loadNotifications();
+		const channel = supabase
+			.channel(`nav-notifs-${user.id}`)
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'documents', filter: `user_id=eq.${user.id}` }, () => loadNotifications())
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'activities', filter: `user_id=eq.${user.id}` }, () => loadNotifications())
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'job_applications', filter: `user_id=eq.${user.id}` }, () => loadNotifications())
+			.subscribe();
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [user]);
+
+	const handleToggleNotifications = () => {
+		const next = !notificationsOpen;
+		setNotificationsOpen(next);
+		if (next) {
+			const now = new Date().toISOString();
+			localStorage.setItem('notifications:lastSeen', now);
+			setUnreadCount(0);
+		}
+	};
 
 	// Close dropdowns when clicking outside
 	useEffect(() => {
@@ -702,33 +812,50 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 				</CenterSection>
 				
 				<RightSection>
-					<IconContainer>
-						<IconButton aria-label="Toggle theme" onClick={toggleMode}>
-							<ThemeToggleIcon mode={mode} />
-						</IconButton>
-					</IconContainer>
-					<IconContainer ref={notificationsRef}>
-						<IconButton 
-							aria-label="Notifications" 
-							onClick={() => setNotificationsOpen(!notificationsOpen)}
-						>
-							<NotificationBellIcon />
-							<NotificationBadge>3</NotificationBadge>
-						</IconButton>
-						{notificationsOpen && (
-							<Dropdown>
-								<DropdownItem href="#">New application received</DropdownItem>
-								<DropdownItem href="#">Interview scheduled</DropdownItem>
-								<DropdownItem href="#">Document uploaded</DropdownItem>
-							</Dropdown>
-						)}
-					</IconContainer>
+					<IconGroup>
+						<IconContainer>
+							<IconButton aria-label="Toggle theme" onClick={toggleMode}>
+								<ThemeToggleIcon mode={mode} />
+							</IconButton>
+						</IconContainer>
+						<IconContainer ref={notificationsRef}>
+							<IconButton 
+								aria-label="Notifications" 
+								onClick={handleToggleNotifications}
+							>
+								<NotificationBellIcon />
+								{unreadCount > 0 && <NotificationBadge>{unreadCount > 9 ? '9+' : unreadCount}</NotificationBadge>}
+							</IconButton>
+							{notificationsOpen && (
+								<Dropdown>
+									{notifications.length === 0 && (
+										<DropdownItem as="div">No notifications</DropdownItem>
+									)}
+									{notifications.map(n => (
+										<DropdownItem as="div" key={`${n.type}-${n.id}-${n.createdAt}`}>
+											{n.title}
+										</DropdownItem>
+									))}
+								</Dropdown>
+							)}
+						</IconContainer>
+					</IconGroup>
 					
 					{user ? (
 						<IconContainer ref={userDropdownRef}>
-							<UserAvatar onClick={() => setUserDropdownOpen(!userDropdownOpen)}>
-								{user.email?.charAt(0).toUpperCase() || 'U'}
-							</UserAvatar>
+							{(() => {
+							  const meta = (user?.user_metadata as Record<string, unknown>) || {};
+							  const avatarUrl = typeof meta.avatar_url === 'string' ? meta.avatar_url : '';
+							  return (
+							    <UserAvatar $hasImage={!!avatarUrl} onClick={() => setUserDropdownOpen(!userDropdownOpen)}>
+							      {avatarUrl ? (
+							        <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+							      ) : (
+							        user.email?.charAt(0).toUpperCase() || 'U'
+							      )}
+							    </UserAvatar>
+							  );
+							})()}
 							{userDropdownOpen && (
 								<Dropdown>
 									<DropdownLink to="/profile" onClick={() => setUserDropdownOpen(false)}>Settings</DropdownLink>

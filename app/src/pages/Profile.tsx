@@ -1,12 +1,16 @@
 import type { FC } from 'react';
 import styled from 'styled-components';
 import { useThemeMode } from '../contexts/themeMode';
+import { useEffect, useState, useRef } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../hooks/useAuth';
 
 const ProfileContainer = styled.div`
   width: 100%;
   max-width: 100%;
   padding: 0.5rem;
   box-sizing: border-box;
+  overflow-x: hidden; /* prevent horizontal scroll on mobile */
   
   @media (min-width: 480px) {
     padding: 1rem;
@@ -267,8 +271,126 @@ const DescriptionText = styled.p`
   }
 `;
 
+const AvatarRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const AvatarCircle = styled.div`
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
+  border: 1px solid ${props => props.theme.colors.borders};
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+`;
+
+const UploadInfo = styled.span`
+  color: ${props => props.theme.colors.bodyText};
+  font-size: 0.85rem;
+`;
+
 export const Profile: FC = () => {
   const { mode, setMode } = useThemeMode();
+  const { user } = useAuth();
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [language, setLanguage] = useState('English');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveOk, setSaveOk] = useState(false);
+
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      // Load profile
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (prof?.full_name) setFullName(prof.full_name as string);
+      // Load metadata
+      const meta = user.user_metadata as Record<string, unknown> | undefined;
+      if (meta?.username) setUsername(String(meta.username));
+      if (meta?.language) setLanguage(String(meta.language));
+      if (meta?.avatar_url) setAvatarUrl(String(meta.avatar_url));
+    };
+    load();
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    setSaveError(null);
+    setSaveOk(false);
+    try {
+      const { error: upsertErr } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, full_name: fullName, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      if (upsertErr) throw upsertErr;
+      const { error: metaErr } = await supabase.auth.updateUser({ data: { username, language } });
+      if (metaErr) throw metaErr;
+      setSaveOk(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not save';
+      setSaveError(message);
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveOk(false), 2000);
+    }
+  };
+
+  const handleChooseAvatar = () => fileInputRef.current?.click();
+
+  const handleAvatarSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select an image file');
+      return;
+    }
+    setAvatarError(null);
+    setAvatarSaving(true);
+
+    try {
+      const ext = file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : 'jpg';
+      const objectPath = `${user.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('documents')
+        .upload(objectPath, file, { contentType: file.type, upsert: true, cacheControl: '3600' });
+      if (upErr) throw upErr;
+
+      const { data: signed, error: signErr } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(objectPath, 60 * 60 * 24 * 7); // 7 days
+      if (signErr) throw signErr;
+
+      const url = signed?.signedUrl || null;
+      setAvatarUrl(url);
+      const { error: metaErr } = await supabase.auth.updateUser({ data: { avatar_url: url, avatar_path: objectPath } });
+      if (metaErr) throw metaErr;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setAvatarError(message);
+    } finally {
+      setAvatarSaving(false);
+    }
+  };
 
   return (
     <ProfileContainer>
@@ -276,40 +398,59 @@ export const Profile: FC = () => {
       
       <Section>
         <SectionHeader>Profile Settings</SectionHeader>
-        <Form>
+        <Form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
           <TwoCol>
             <FormGroup>
               <Label htmlFor="full-name">Full Name</Label>
-              <Input type="text" id="full-name" placeholder="Your name" />
+              <Input id="full-name" placeholder="Your name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
             </FormGroup>
             <FormGroup>
               <Label htmlFor="username">Username</Label>
-              <Input type="text" id="username" placeholder="unique-username" />
+              <Input id="username" placeholder="unique-username" value={username} onChange={(e) => setUsername(e.target.value)} />
             </FormGroup>
           </TwoCol>
           <FormGroup>
-            <Label htmlFor="avatar">Profile Picture</Label>
-            <Input type="file" id="avatar" accept="image/*" />
+            <Label>Profile Picture</Label>
+            <AvatarRow>
+              <AvatarCircle>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  (user?.email?.charAt(0).toUpperCase() || 'U')
+                )}
+              </AvatarCircle>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div>
+                  <SecondaryButton type="button" onClick={handleChooseAvatar} disabled={avatarSaving}>Choose Image</SecondaryButton>
+                  <input ref={fileInputRef} id="avatar" type="file" accept="image/*" onChange={handleAvatarSelected} style={{ display: 'none' }} />
+                </div>
+                <UploadInfo>PNG or JPG, recommended square image</UploadInfo>
+                {avatarSaving && <UploadInfo>Uploading…</UploadInfo>}
+                {avatarError && <span style={{ color: '#f87171' }}>{avatarError}</span>}
+              </div>
+            </AvatarRow>
           </FormGroup>
           <TwoCol>
             <FormGroup>
               <Label htmlFor="new-password">New Password</Label>
-              <Input type="password" id="new-password" placeholder="Enter new password" />
+              <Input type="password" id="new-password" placeholder="Enter new password" disabled />
             </FormGroup>
             <FormGroup>
               <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input type="password" id="confirm-password" placeholder="Confirm new password" />
+              <Input type="password" id="confirm-password" placeholder="Confirm new password" disabled />
             </FormGroup>
           </TwoCol>
           <FormGroup>
             <Label htmlFor="language">Language</Label>
-            <Select id="language">
+            <Select id="language" value={language} onChange={(e) => setLanguage(e.target.value)}>
               <option>English</option>
               <option>Norsk</option>
               <option>Deutsch</option>
             </Select>
           </FormGroup>
-          <Button type="button">Save Profile</Button>
+          <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Profile'}</Button>
+          {saveOk && <span style={{ color: '#10b981' }}>Saved</span>}
+          {saveError && <span style={{ color: '#f87171' }}>Error: {saveError}</span>}
         </Form>
       </Section>
       

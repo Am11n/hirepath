@@ -57,13 +57,23 @@ const Tagline = styled.p`
 	text-align: center;
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 0.5rem;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	line-height: 1.1;
+	width: 100%;
+
+	@media (max-width: 360px) {
+		font-size: 0.875rem;
+	}
 `;
 
 const TaglineLogo = styled.img`
 	height: 1em; /* same visual height as text */
 	width: auto;
 	vertical-align: middle;
+	flex: 0 0 auto;
 `;
 
 const Socials = styled.div`
