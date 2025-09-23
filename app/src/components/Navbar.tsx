@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useCallback } from 'react';
 import type { FC } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
@@ -607,7 +608,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 	const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 	const [unreadCount, setUnreadCount] = useState<number>(0);
 
-	const loadNotifications = async () => {
+	const loadNotifications = useCallback(async () => {
 		if (!user) return;
 		const lastSeenRaw = localStorage.getItem('notifications:lastSeen');
 		const lastSeen = lastSeenRaw ? new Date(lastSeenRaw).toISOString() : '1970-01-01T00:00:00.000Z';
@@ -672,7 +673,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 			.slice(0, 12);
 		setNotifications(merged);
 		setUnreadCount(merged.filter(n => n.createdAt > lastSeen).length);
-	};
+	}, [user]);
 
 	useEffect(() => {
 		if (!user) return;
@@ -686,7 +687,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 		return () => {
 			supabase.removeChannel(channel);
 		};
-	}, [user]);
+	}, [user, loadNotifications]);
 
 	const handleToggleNotifications = () => {
 		const next = !notificationsOpen;

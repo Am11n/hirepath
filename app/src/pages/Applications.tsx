@@ -1,8 +1,11 @@
 import type { FC } from 'react';
 import styled from 'styled-components';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
+
+// Add a shared Status type
+type Status = 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 
 const ApplicationsContainer = styled.div`
   width: 100%;
@@ -221,44 +224,12 @@ const TableCell = styled.td`
     padding: 1rem;
     font-size: 0.95rem;
   }
+  
+  &:last-child {
+    text-align: right;
+  }
 `;
 
-const StatusBadge = styled.span<{ status: string }>`
-  padding: 0.125rem 0.5rem;
-  border-radius: 20px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  white-space: nowrap;
-  
-  @media (min-width: 480px) {
-    padding: 0.2rem 0.6rem;
-    font-size: 0.7rem;
-  }
-  
-  @media (min-width: 768px) {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.8rem;
-  }
-  
-  background: ${props => {
-    switch (props.status) {
-      case 'Applied': return 'rgba(59, 130, 246, 0.2)';
-      case 'Interview': return 'rgba(139, 92, 246, 0.2)';
-      case 'Offer': return 'rgba(16, 185, 129, 0.2)';
-      case 'Rejected': return 'rgba(239, 68, 68, 0.2)';
-      default: return 'rgba(148, 163, 184, 0.2)';
-    }
-  }};
-  color: ${props => {
-    switch (props.status) {
-      case 'Applied': return '#3B82F6';
-      case 'Interview': return '#8B5CF6';
-      case 'Offer': return '#10B981';
-      case 'Rejected': return '#EF4444';
-      default: return '#94A3B8';
-    }
-  }};
-`;
 
 const EmptyStateContainer = styled.div`
   background-color: ${props => props.theme.glass.card};
@@ -453,23 +424,273 @@ const PrimaryButton = styled.button`
   cursor: pointer;
 `;
 
-const RowActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-`;
-
 const EditButton = styled(SecondaryButton)`
   padding: 0.4rem 0.8rem;
 `;
 
+const ViewToggle = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`;
 
+const ToggleButton = styled.button<{ $active?: boolean }>`
+  background: ${p => p.$active ? p.theme.colors.primary : 'rgba(255,255,255,0.06)'};
+  color: ${p => p.$active ? '#fff' : p.theme.colors.headings};
+  border: 1px solid ${p => p.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+const Kanban = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  @media (min-width: 768px) { grid-template-columns: repeat(4, 1fr); }
+`;
+
+const Column = styled.div<{ $variant?: 'applied' | 'interview' | 'offer' | 'rejected' }>`
+  backdrop-filter: saturate(120%) blur(6px);
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid ${props => props.theme.colors.borders};
+  background: ${props => {
+    const v = props.$variant || 'applied';
+    const bg = v === 'applied'
+      ? 'rgba(139, 92, 246, 0.22)'
+      : v === 'interview'
+        ? 'rgba(245, 158, 11, 0.22)'
+        : v === 'offer'
+          ? 'rgba(16, 185, 129, 0.22)'
+          : 'rgba(239, 68, 68, 0.22)';
+    return `linear-gradient(to bottom right, ${bg}, rgba(255,255,255,0.07))`;
+  }};
+`;
+
+const ColumnHeader = styled.h3`
+  color: ${props => props.theme.colors.headings};
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+`;
+
+const Card = styled.div`
+  background: rgba(255,255,255,0.06);
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 10px;
+  padding: 0.6rem;
+  margin-bottom: 0.5rem;
+  cursor: grab;
+`;
+
+const SmallSelectInline = styled.select`
+  background: rgba(255,255,255,0.06);
+  color: ${props => props.theme.colors.headings};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+`;
+
+const StatusDot = styled.span<{ status: string }>`
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  background: ${p => {
+    switch (p.status) {
+      case 'Applied': return '#8B5CF6';
+      case 'Interview': return '#F59E0B';
+      case 'Offer': return '#10B981';
+      case 'Rejected': return '#EF4444';
+      default: return '#94A3B8';
+    }
+  }};
+`;
+
+const ColumnHeaderRight = styled.div`
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const AddMini = styled.button`
+  background: rgba(255,255,255,0.08);
+  color: ${props => props.theme.colors.headings};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+const KebabButton = styled.button`
+  background: transparent;
+  color: ${props => props.theme.colors.headings};
+  border: 1px solid ${props => props.theme.colors.borders};
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+`;
+
+const ActionMenu = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0; /* match row height */
+  right: 36px; /* open to the left of the kebab button (28px + gap) */
+  background: ${props => props.theme.glass.dropdown};
+  backdrop-filter: saturate(120%) blur(6px);
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 8px;
+  min-width: 160px;
+  padding: 0.25rem;
+  z-index: 20;
+  display: flex;
+  align-items: center; /* center items vertically within row height */
+`;
+
+const ActionItem = styled.button`
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: ${props => props.theme.colors.headings};
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  &:hover { background: rgba(255,255,255,0.06); }
+`;
+
+const Relative = styled.div`
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center; /* ensure button aligns to row center */
+`;
+
+const SmallInputInline = styled.input`
+  background: rgba(255,255,255,0.06);
+  color: ${props => props.theme.colors.headings};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  width: 100%;
+`;
+
+// New: clickable status pill styled as the existing badge
+const StatusPill = styled.button<{ status: Status }>`
+  padding: 0.125rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid ${props => props.theme.colors.borders};
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: ${props => {
+    switch (props.status) {
+      case 'Applied': return 'rgba(139, 92, 246, 0.2)';
+      case 'Interview': return 'rgba(245, 158, 11, 0.2)';
+      case 'Offer': return 'rgba(16, 185, 129, 0.2)';
+      case 'Rejected': return 'rgba(239, 68, 68, 0.2)';
+      default: return 'rgba(148, 163, 184, 0.2)';
+    }
+  }};
+  color: ${props => {
+    switch (props.status) {
+      case 'Applied': return '#8B5CF6';
+      case 'Interview': return '#F59E0B';
+      case 'Offer': return '#10B981';
+      case 'Rejected': return '#EF4444';
+      default: return '#94A3B8';
+    }
+  }};
+`;
+
+const StatusMenu = styled.div`
+  position: absolute;
+  top: 28px;
+  left: 0;
+  background: ${props => props.theme.glass.dropdown};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.25rem;
+  min-width: 140px;
+  z-index: 20;
+`;
+
+const StatusMenuItem = styled.button<{ status: Status }>`
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  color: ${props => props.theme.colors.headings};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  &:hover { background: rgba(255,255,255,0.06); }
+`;
+
+const DangerButton = styled(SecondaryButton)`
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  &:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
+`;
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+`;
+
+const BulkBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  margin: 0 0 0.75rem 0;
+`;
+
+
+type ActivityRow = {
+  job_application_id: string | null;
+  title: string | null;
+  due_date: string | null;
+  completed: boolean | null;
+};
+
+// Include optional status date fields so we don't need any-casts later
 type ApplicationRow = {
   id: string;
   company_name: string;
   position: string;
   applied_date: string | null;
   status: 'Applied' | 'Interview' | 'Offer' | 'Rejected' | string;
+  interview_date?: string | null;
+  offer_date?: string | null;
+  rejected_date?: string | null;
 };
 
 export const Applications: FC = () => {
@@ -492,6 +713,7 @@ export const Applications: FC = () => {
   const [url, setUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [createStatus, setCreateStatus] = useState<'Applied' | 'Interview' | 'Offer' | 'Rejected'>('Applied');
 
   // Edit modal state
   const [showEdit, setShowEdit] = useState(false);
@@ -500,9 +722,7 @@ export const Applications: FC = () => {
   const [ePosition, setEPosition] = useState('');
   const [eStatus, setEStatus] = useState<'Applied' | 'Interview' | 'Offer' | 'Rejected' | ''>('');
   const [eAppliedDate, setEAppliedDate] = useState<string>('');
-  const [eInterviewDate, setEInterviewDate] = useState<string>('');
-  const [eOfferDate, setEOfferDate] = useState<string>('');
-  const [eRejectedDate, setERejectedDate] = useState<string>('');
+  const [eStatusDate, setEStatusDate] = useState<string>('');
   const [eUrl, setEUrl] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [saveErrorEdit, setSaveErrorEdit] = useState<string | null>(null);
@@ -512,6 +732,59 @@ export const Applications: FC = () => {
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [dateRangeFilter, setDateRangeFilter] = useState<'all' | '7' | '30' | '90'>('all');
   const [companies, setCompanies] = useState<string[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
+  // sorting
+  const [sortField, setSortField] = useState<'applied_date' | 'company_name' | 'status'>('applied_date');
+  const [sortDir] = useState<'asc' | 'desc'>('desc');
+  // next action map
+  const [nextActionByApp, setNextActionByApp] = useState<Record<string, { title: string; due: string | null }>>({});
+  // view (persist across reloads)
+  const [view, setView] = useState<'list' | 'kanban'>(() => {
+    const v = localStorage.getItem('applications:view');
+    return v === 'kanban' ? 'kanban' : 'list';
+  });
+  useEffect(() => {
+    localStorage.setItem('applications:view', view);
+  }, [view]);
+
+  // selection for bulk actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const allVisibleSelected = rows.length > 0 && rows.every(r => selectedIds.has(r.id));
+  const toggleAllVisible = () => {
+    setSelectedIds(prev => {
+      const next = new Set<string>(prev);
+      if (rows.length === 0) return next;
+      if (rows.every(r => next.has(r.id))) {
+        rows.forEach(r => next.delete(r.id));
+      } else {
+        rows.forEach(r => next.add(r.id));
+      }
+      return next;
+    });
+  };
+  const toggleOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set<string>(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const [bulkStatus, setBulkStatus] = useState<Status>('Applied');
+  const bulkUpdateStatus = async () => {
+    if (!user || selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    await supabase.from('job_applications').update({ status: bulkStatus }).in('id', ids).eq('user_id', user.id);
+    setSelectedIds(new Set());
+    await refresh();
+  };
+  const bulkDelete = async () => {
+    if (!user || selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    await supabase.from('job_applications').delete().in('id', ids).eq('user_id', user.id);
+    setSelectedIds(new Set());
+    await refresh();
+  };
 
   const formatDate = (d: Date): string => {
     const yyyy = d.getFullYear();
@@ -520,26 +793,13 @@ export const Applications: FC = () => {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  // Helper to format ISO date to input[type="datetime-local"] value in local time
-  const toLocalDateTimeInput = (iso?: string | null) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const mm = pad(d.getMonth() + 1);
-    const dd = pad(d.getDate());
-    const hh = pad(d.getHours());
-    const mi = pad(d.getMinutes());
-    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-  };
-
   const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     setError(null);
     let query = supabase
       .from('job_applications')
-      .select('id, company_name, position, applied_date, status')
+      .select('id, company_name, position, applied_date, status, interview_date, offer_date, rejected_date')
       .eq('user_id', user.id);
 
     if (statusFilter !== 'all') {
@@ -554,16 +814,36 @@ export const Applications: FC = () => {
       start.setDate(start.getDate() - days);
       query = query.gte('applied_date', formatDate(start));
     }
+    // sorting
+    query = query.order(sortField, { ascending: sortDir === 'asc' });
 
-    const { data, error } = await query.order('created_at', { ascending: false });
-    if (error) {
-      setError(error.message);
-      setRows([]);
-    } else {
-      setRows((data || []) as ApplicationRow[]);
+    const [{ data, error: err }, companiesRes, actsRes] = await Promise.all([
+      query,
+      supabase.from('job_applications').select('company_name').eq('user_id', user.id),
+      supabase.from('activities').select('job_application_id, title, due_date, completed').eq('user_id', user.id).eq('completed', false)
+    ]);
+    if (err) {
+      setError(err.message); setRows([]); setLoading(false); return;
     }
+    setRows((data || []) as ApplicationRow[]);
+    const comps = Array.from(new Set((companiesRes.data || []).map(r => r.company_name).filter(Boolean)));
+    setCompanies(comps);
+    // build next action map
+    const map: Record<string, { title: string; due: string | null }> = {};
+    (actsRes.data as ActivityRow[] | null || []).forEach((a) => {
+      const key = a.job_application_id; if (!key) return;
+      const prev = map[key];
+      const due = a.due_date || null;
+      if (!prev) map[key] = { title: a.title || 'Follow up', due };
+      else {
+        const prevDue = prev.due ? new Date(prev.due).getTime() : Number.POSITIVE_INFINITY;
+        const curDue = due ? new Date(due).getTime() : Number.POSITIVE_INFINITY;
+        if (curDue < prevDue) map[key] = { title: a.title || 'Follow up', due };
+      }
+    });
+    setNextActionByApp(map);
     setLoading(false);
-  }, [user, statusFilter, companyFilter, dateRangeFilter]);
+  }, [user, statusFilter, companyFilter, dateRangeFilter, sortField, sortDir]);
 
   useEffect(() => {
     let isMounted = true;
@@ -598,6 +878,20 @@ export const Applications: FC = () => {
     setShowCreate(true);
   };
 
+  const handleOpenCreateWithStatus = (status: 'Applied' | 'Interview' | 'Offer' | 'Rejected') => {
+    setCompany('');
+    setPosition('');
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    setAppliedDate(`${yyyy}-${mm}-${dd}`);
+    setUrl('');
+    setSaveError(null);
+    setCreateStatus(status);
+    setShowCreate(true);
+  };
+
   const handleSave = async () => {
     if (!user) return;
     if (!company.trim() || !position.trim()) {
@@ -611,7 +905,7 @@ export const Applications: FC = () => {
         user_id: user.id,
         company_name: company.trim(),
         position: position.trim(),
-        status: 'Applied',
+        status: createStatus,
         applied_date: appliedDate || null,
         url: url.trim() || null,
       };
@@ -634,9 +928,10 @@ export const Applications: FC = () => {
     const s = row.status;
     setEStatus(s === 'Applied' || s === 'Interview' || s === 'Offer' || s === 'Rejected' ? (s as 'Applied' | 'Interview' | 'Offer' | 'Rejected') : 'Applied');
     setEAppliedDate(row.applied_date ?? '');
-    setEInterviewDate(toLocalDateTimeInput((row as any).interview_date as string | null));
-    setEOfferDate('');
-    setERejectedDate('');
+    if (s === 'Interview') setEStatusDate(toLocalDateInput(row.interview_date ?? null));
+    else if (s === 'Offer') setEStatusDate(toLocalDateInput(row.offer_date ?? null));
+    else if (s === 'Rejected') setEStatusDate(toLocalDateInput(row.rejected_date ?? null));
+    else setEStatusDate('');
     setEUrl('');
     setSaveErrorEdit(null);
     setShowEdit(true);
@@ -658,9 +953,13 @@ export const Applications: FC = () => {
         applied_date: eAppliedDate || null,
         url: eUrl.trim() || null,
       };
-      if (eInterviewDate) update.interview_date = new Date(eInterviewDate).toISOString();
-      if (eOfferDate) update.offer_date = eOfferDate;
-      if (eRejectedDate) update.rejected_date = eRejectedDate;
+      update.interview_date = null;
+      update.offer_date = null;
+      update.rejected_date = null;
+      if (eStatus === 'Interview') update.interview_date = eStatusDate || null;
+      else if (eStatus === 'Offer') update.offer_date = eStatusDate || null;
+      else if (eStatus === 'Rejected') update.rejected_date = eStatusDate || null;
+      // Applied has no status date
 
       const { error: updErr } = await supabase
         .from('job_applications')
@@ -669,6 +968,7 @@ export const Applications: FC = () => {
         .eq('user_id', user.id);
       if (updErr) throw updErr;
       setShowEdit(false);
+      await new Promise(res => setTimeout(res, 100));
       await refresh();
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to update application';
@@ -678,92 +978,433 @@ export const Applications: FC = () => {
     }
   };
 
+  // helper to filter by status
+  const byStatus = (status: 'Applied' | 'Interview' | 'Offer' | 'Rejected') =>
+    rows.filter(r => r.status === status);
+
+  const handleCardDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleColumnDrop = async (e: React.DragEvent<HTMLDivElement>, toStatus: 'Applied' | 'Interview' | 'Offer' | 'Rejected') => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain');
+    if (!id || !user) return;
+    await supabase
+      .from('job_applications')
+      .update({ status: toStatus })
+      .eq('id', id)
+      .eq('user_id', user.id);
+    await refresh();
+  };
+
+  const allowDrop = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
+  // inline status update
+  // superseded by enhanced status pill handler later in file
+  // (duplicate removed to avoid redeclaration)
+
+  const actionOpenIdRef = useRef<string | null>(null);
+  const [actionOpenId, setActionOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onDocClick = () => {
+      if (actionOpenIdRef.current) {
+        setActionOpenId(null);
+        actionOpenIdRef.current = null;
+      }
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, []);
+
+  const toggleActionMenu = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const next = actionOpenId === id ? null : id;
+    setActionOpenId(next);
+    actionOpenIdRef.current = next;
+  };
+
+  const deleteApplication = async (id: string) => {
+    if (!user) return;
+    try {
+      const { error: delErr } = await supabase.from('job_applications').delete().eq('id', id).eq('user_id', user.id);
+      if (delErr) throw delErr;
+      setActionOpenId(null); actionOpenIdRef.current = null;
+      await refresh();
+    } catch (err: unknown) {
+      console.error('Delete failed', err);
+    }
+  };
+
+  const markFollowedUp = async (appId: string) => {
+    if (!user) return;
+    try {
+      // Complete any open activities for this application
+      await supabase
+        .from('activities')
+        .update({ completed: true })
+        .eq('user_id', user.id)
+        .eq('job_application_id', appId)
+        .eq('completed', false);
+      // Optionally insert a log entry (commented out)
+      // await supabase.from('activities').insert({ user_id: user.id, job_application_id: appId, title: 'Followed up', completed: true, type: 'other', due_date: null });
+      setActionOpenId(null); actionOpenIdRef.current = null;
+      await refresh();
+    } catch (err: unknown) {
+      console.error('Follow up failed', err);
+    }
+  };
+
+  // Inline date editing helpers
+  const updateDateInline = async (
+    id: string,
+    field: 'applied_date' | 'interview_date' | 'offer_date' | 'rejected_date',
+    value: string
+  ) => {
+    if (!user) return;
+    try {
+      const payload: Record<string, string | null> = {};
+      payload[field] = value || null;
+      const { error: updErr } = await supabase
+        .from('job_applications')
+        .update(payload)
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (updErr) throw updErr;
+      await new Promise(res => setTimeout(res, 100));
+      await refresh();
+    } catch (err: unknown) {
+      console.error('Date update failed', err);
+    }
+  };
+
+  const toLocalDateInput = (iso?: string | null) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const formatStatusDate = (app: ApplicationRow): string => {
+    const s = app.status as Status | undefined;
+    if (s === 'Interview' && app.interview_date) return new Date(app.interview_date).toLocaleDateString();
+    if (s === 'Offer' && app.offer_date) return new Date(app.offer_date).toLocaleDateString();
+    if (s === 'Rejected' && app.rejected_date) return new Date(app.rejected_date).toLocaleDateString();
+    // For 'Applied' or missing dates, show dash
+    return '-';
+  };
+
+  const [statusOpenId, setStatusOpenId] = useState<string | null>(null);
+  const statusOpenIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const handleDocClick = () => {
+      if (statusOpenIdRef.current) {
+        setStatusOpenId(null);
+        statusOpenIdRef.current = null;
+      }
+    };
+    document.addEventListener('click', handleDocClick);
+    return () => document.removeEventListener('click', handleDocClick);
+  }, []);
+
+  const toggleStatusMenu = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const next = statusOpenId === id ? null : id;
+    setStatusOpenId(next);
+    statusOpenIdRef.current = next;
+  };
+
+  const updateStatusInline = async (id: string, newStatus: Status) => {
+    if (!user) return;
+    await supabase.from('job_applications').update({ status: newStatus }).eq('id', id).eq('user_id', user.id);
+    setStatusOpenId(null); statusOpenIdRef.current = null;
+    await refresh();
+  };
+
   return (
     <ApplicationsContainer>
       <TopBar>
         <Header>Applications</Header>
-        <CreateButtonInline onClick={handleOpenCreate}>Create Application</CreateButtonInline>
+        <ViewToggle>
+          <ToggleButton $active={view==='list'} onClick={() => setView('list')}>List</ToggleButton>
+          <ToggleButton $active={view==='kanban'} onClick={() => setView('kanban')}>Kanban</ToggleButton>
+          <CreateButtonInline onClick={handleOpenCreate}>Create Application</CreateButtonInline>
+        </ViewToggle>
       </TopBar>
-      <FiltersContainer>
-        <FilterHeader>Filters</FilterHeader>
-        <FilterOptions>
-          <FilterGroup>
-            <FilterLabel>Status</FilterLabel>
-            <FilterSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | 'Applied' | 'Interview' | 'Offer' | 'Rejected')}>
-              <option value="all">All Statuses</option>
-              <option>Applied</option>
-              <option>Interview</option>
-              <option>Offer</option>
-              <option>Rejected</option>
-            </FilterSelect>
-          </FilterGroup>
-          <FilterGroup>
-            <FilterLabel>Company</FilterLabel>
-            <FilterSelect value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
-              <option value="all">All Companies</option>
-              {companies.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </FilterSelect>
-          </FilterGroup>
-          <FilterGroup>
-            <FilterLabel>Date Range</FilterLabel>
-            <FilterSelect value={dateRangeFilter} onChange={(e) => setDateRangeFilter(e.target.value as 'all' | '7' | '30' | '90')}>
-              <option value="all">All Time</option>
-              <option value="7">Last 7 Days</option>
-              <option value="30">Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-            </FilterSelect>
-          </FilterGroup>
-        </FilterOptions>
-      </FiltersContainer>
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Company</TableHeader>
-              <TableHeader>Position</TableHeader>
-              <TableHeader>Date Applied</TableHeader>
-              <TableHeader>Status</TableHeader>
-              <TableHeader>Actions</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {loading && (
-              <tr><TableCell colSpan={5}>Loading…</TableCell></tr>
+      {view === 'list' && (
+        <>
+          <FiltersContainer>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <FilterHeader style={{ margin: 0 }}>Filters</FilterHeader>
+              <SecondaryButton type="button" onClick={() => setFiltersOpen(v=>!v)}>{filtersOpen ? 'Hide' : 'Show'}</SecondaryButton>
+            </div>
+            {filtersOpen && (
+              <FilterOptions>
+                <FilterGroup>
+                  <FilterLabel>Status</FilterLabel>
+                  <FilterSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | 'Applied' | 'Interview' | 'Offer' | 'Rejected')}>
+                    <option value="all">All Statuses</option>
+                    <option>Applied</option>
+                    <option>Interview</option>
+                    <option>Offer</option>
+                    <option>Rejected</option>
+                  </FilterSelect>
+                </FilterGroup>
+                <FilterGroup>
+                  <FilterLabel>Company</FilterLabel>
+                  <FilterSelect value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
+                    <option value="all">All Companies</option>
+                    {companies.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </FilterSelect>
+                </FilterGroup>
+                <FilterGroup>
+                  <FilterLabel>Date Range</FilterLabel>
+                  <FilterSelect value={dateRangeFilter} onChange={(e) => setDateRangeFilter(e.target.value as 'all' | '7' | '30' | '90')}>
+                    <option value="all">All Time</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                  </FilterSelect>
+                </FilterGroup>
+                <FilterGroup>
+                  <FilterLabel>Sort by</FilterLabel>
+                  <FilterSelect value={sortField} onChange={(e) => setSortField(e.target.value as 'applied_date'|'company_name'|'status')}>
+                    <option value="applied_date">Applied Date</option>
+                    <option value="company_name">Company</option>
+                    <option value="status">Status</option>
+                  </FilterSelect>
+                </FilterGroup>
+              </FilterOptions>
             )}
-            {error && !loading && (
-              <tr><TableCell colSpan={5} style={{ color: '#f87171' }}>Error: {error}</TableCell></tr>
+          </FiltersContainer>
+
+          {selectedIds.size > 0 && (
+            <BulkBar>
+              <span style={{ color:'#94A3B8' }}>{selectedIds.size} selected</span>
+              <SmallSelectInline value={bulkStatus} onChange={(e)=>setBulkStatus(e.target.value as Status)}>
+                <option>Applied</option>
+                <option>Interview</option>
+                <option>Offer</option>
+                <option>Rejected</option>
+              </SmallSelectInline>
+              <PrimaryButton type="button" onClick={bulkUpdateStatus}>Change Status</PrimaryButton>
+              <DangerButton type="button" onClick={bulkDelete}>Delete</DangerButton>
+            </BulkBar>
+          )}
+
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeader style={{ width: 36 }}>
+                    <Checkbox checked={allVisibleSelected} onChange={toggleAllVisible} />
+                  </TableHeader>
+                  <TableHeader>Company</TableHeader>
+                  <TableHeader>Position</TableHeader>
+                  <TableHeader>Date Applied</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Status Date</TableHeader>
+                  <TableHeader>Next Action</TableHeader>
+                  <TableHeader>Actions</TableHeader>
+                </tr>
+              </TableHead>
+              <TableBody>
+                {loading && (<tr><TableCell colSpan={8}>Loading…</TableCell></tr>)}
+                {error && !loading && (<tr><TableCell colSpan={8} style={{ color: '#f87171' }}>Error: {error}</TableCell></tr>)}
+                {!loading && !error && rows.length === 0 && (<tr><TableCell colSpan={8}>No applications yet.</TableCell></tr>)}
+                {!loading && !error && rows.map(app => (
+                  <TableRow key={app.id} onClick={() => handleOpenEdit(app)} style={{ cursor: 'pointer' }}>
+                    <TableCell onClick={(e)=>e.stopPropagation()}>
+                      <Checkbox checked={selectedIds.has(app.id)} onChange={()=>toggleOne(app.id)} />
+                    </TableCell>
+                    <TableCell>{app.company_name}</TableCell>
+                    <TableCell>{app.position}</TableCell>
+                    <TableCell>
+                      <SmallInputInline
+                        type="date"
+                        value={toLocalDateInput(app.applied_date)}
+                        onChange={(e) => updateDateInline(app.id, 'applied_date', e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Relative>
+                        <StatusPill status={app.status as Status} onClick={(e) => toggleStatusMenu(e, app.id)}>
+                          <StatusDot status={app.status} />{app.status}
+                        </StatusPill>
+                        {statusOpenId === app.id && (
+                          <StatusMenu>
+                            <StatusMenuItem status="Applied" onClick={() => updateStatusInline(app.id, 'Applied')}><StatusDot status="Applied" />Applied</StatusMenuItem>
+                            <StatusMenuItem status="Interview" onClick={() => updateStatusInline(app.id, 'Interview')}><StatusDot status="Interview" />Interview</StatusMenuItem>
+                            <StatusMenuItem status="Offer" onClick={() => updateStatusInline(app.id, 'Offer')}><StatusDot status="Offer" />Offer</StatusMenuItem>
+                            <StatusMenuItem status="Rejected" onClick={() => updateStatusInline(app.id, 'Rejected')}><StatusDot status="Rejected" />Rejected</StatusMenuItem>
+                          </StatusMenu>
+                        )}
+                      </Relative>
+                    </TableCell>
+                    <TableCell>{formatStatusDate(app)}</TableCell>
+                    <TableCell>
+                      {nextActionByApp[app.id] ? (
+                        (() => { const na = nextActionByApp[app.id]; const dueStr = na.due ? ` • ${new Date(na.due as string).toLocaleDateString()}` : ''; return <span>{na.title}{dueStr}</span>; })()
+                      ) : (<span>-</span>)}
+                    </TableCell>
+                    <TableCell>
+                      <div style={{ display:'flex', justifyContent:'flex-end', height:'100%' }}>
+                        <Relative>
+                          <KebabButton onClick={(e) => toggleActionMenu(e, app.id)}>⋮</KebabButton>
+                          {actionOpenId === app.id && (
+                            <ActionMenu>
+                              <ActionItem onClick={() => handleOpenEdit(app)}>Edit</ActionItem>
+                              <ActionItem onClick={() => deleteApplication(app.id)}>Delete</ActionItem>
+                              <ActionItem onClick={() => markFollowedUp(app.id)}>Mark Followed Up</ActionItem>
+                            </ActionMenu>
+                          )}
+                        </Relative>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {(!loading && !error && rows.length === 0) && (
+            <EmptyStateContainer>
+              <EmptyStateTitle>No applications found</EmptyStateTitle>
+              <EmptyStateText>Create a new application to add to your list.</EmptyStateText>
+              <CreateButton onClick={handleOpenCreate}>Create Application</CreateButton>
+            </EmptyStateContainer>
+          )}
+        </>
+      )}
+
+      {view === 'kanban' && (
+        <>
+          <FiltersContainer>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <FilterHeader style={{ margin: 0 }}>Filters</FilterHeader>
+              <SecondaryButton type="button" onClick={() => setFiltersOpen(v=>!v)}>{filtersOpen ? 'Hide' : 'Show'}</SecondaryButton>
+            </div>
+            {filtersOpen && (
+              <FilterOptions>
+                <FilterGroup>
+                  <FilterLabel>Status</FilterLabel>
+                  <FilterSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | 'Applied' | 'Interview' | 'Offer' | 'Rejected')}>
+                    <option value="all">All Statuses</option>
+                    <option>Applied</option>
+                    <option>Interview</option>
+                    <option>Offer</option>
+                    <option>Rejected</option>
+                  </FilterSelect>
+                </FilterGroup>
+                <FilterGroup>
+                  <FilterLabel>Company</FilterLabel>
+                  <FilterSelect value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
+                    <option value="all">All Companies</option>
+                    {companies.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </FilterSelect>
+                </FilterGroup>
+                <FilterGroup>
+                  <FilterLabel>Date Range</FilterLabel>
+                  <FilterSelect value={dateRangeFilter} onChange={(e) => setDateRangeFilter(e.target.value as 'all' | '7' | '30' | '90')}>
+                    <option value="all">All Time</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                  </FilterSelect>
+                </FilterGroup>
+              </FilterOptions>
             )}
-            {!loading && !error && rows.length === 0 && (
-              <tr><TableCell colSpan={5}>No applications yet.</TableCell></tr>
-            )}
-            {!loading && !error && rows.map(app => (
-              <TableRow key={app.id}>
-                <TableCell>{app.company_name}</TableCell>
-                <TableCell>{app.position}</TableCell>
-                <TableCell>{app.applied_date ?? '-'}</TableCell>
-                <TableCell>
-                  <StatusBadge status={app.status}>{app.status}</StatusBadge>
-                </TableCell>
-                <TableCell>
-                  <RowActions>
+          </FiltersContainer>
+
+          <Kanban>
+            <Column $variant="applied" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Applied')}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ColumnHeader>Applied ({byStatus('Applied').length})</ColumnHeader>
+                <ColumnHeaderRight>
+                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Applied')}>+ Add</AddMini>
+                </ColumnHeaderRight>
+              </div>
+              {byStatus('Applied').map(app => (
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <div style={{ fontWeight: 700 }}>{app.position}</div>
+                  <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
+                  <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
+                  <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
                     <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
-                  </RowActions>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {(!loading && !error && rows.length === 0) && (
-        <EmptyStateContainer>
-          <EmptyStateTitle>No applications found</EmptyStateTitle>
-          <EmptyStateText>Create a new application to add to your list.</EmptyStateText>
-          <CreateButton onClick={handleOpenCreate}>Create Application</CreateButton>
-        </EmptyStateContainer>
+                  </div>
+                </Card>
+              ))}
+            </Column>
+            <Column $variant="interview" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Interview')}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ColumnHeader>Interview ({byStatus('Interview').length})</ColumnHeader>
+                <ColumnHeaderRight>
+                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Interview')}>+ Add</AddMini>
+                </ColumnHeaderRight>
+              </div>
+              {byStatus('Interview').map(app => (
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <div style={{ fontWeight: 700 }}>{app.position}</div>
+                  <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
+                  <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
+                  <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
+                    <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
+                  </div>
+                </Card>
+              ))}
+            </Column>
+            <Column $variant="offer" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Offer')}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ColumnHeader>Offer ({byStatus('Offer').length})</ColumnHeader>
+                <ColumnHeaderRight>
+                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Offer')}>+ Add</AddMini>
+                </ColumnHeaderRight>
+              </div>
+              {byStatus('Offer').map(app => (
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <div style={{ fontWeight: 700 }}>{app.position}</div>
+                  <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
+                  <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
+                  <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
+                    <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
+                  </div>
+                </Card>
+              ))}
+            </Column>
+            <Column $variant="rejected" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Rejected')}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ColumnHeader>Rejected ({byStatus('Rejected').length})</ColumnHeader>
+                <ColumnHeaderRight>
+                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Rejected')}>+ Add</AddMini>
+                </ColumnHeaderRight>
+              </div>
+              {byStatus('Rejected').map(app => (
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <div style={{ fontWeight: 700 }}>{app.position}</div>
+                  <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
+                  <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
+                  <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
+                    <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
+                  </div>
+                </Card>
+              ))}
+            </Column>
+          </Kanban>
+        </>
       )}
 
       {showCreate && (
@@ -830,18 +1471,8 @@ export const Applications: FC = () => {
             </ModalRow>
             <ModalRow>
               <div>
-                <Label htmlFor="e-interview">Interview Date & Time (optional)</Label>
-                <Input id="e-interview" type="datetime-local" value={eInterviewDate} onChange={(e) => setEInterviewDate(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="e-offer">Offer Date (optional)</Label>
-                <Input id="e-offer" type="date" value={eOfferDate} onChange={(e) => setEOfferDate(e.target.value)} />
-              </div>
-            </ModalRow>
-            <ModalRow>
-              <div>
-                <Label htmlFor="e-rejected">Rejected Date (optional)</Label>
-                <Input id="e-rejected" type="date" value={eRejectedDate} onChange={(e) => setERejectedDate(e.target.value)} />
+                <Label htmlFor="e-status-date">Status Date</Label>
+                <Input id="e-status-date" type="date" value={eStatusDate} onChange={(e) => setEStatusDate(e.target.value)} />
               </div>
               <div>
                 <Label htmlFor="e-url">Job URL (optional)</Label>

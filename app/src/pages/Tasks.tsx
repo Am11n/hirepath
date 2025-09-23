@@ -433,7 +433,14 @@ export const Tasks: FC = () => {
   const [rows, setRows] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'All' | 'Due Today' | 'Overdue' | 'Completed'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Due Today' | 'Overdue' | 'Completed'>(() => {
+    const v = localStorage.getItem('tasks:tab');
+    if (v === 'Due Today' || v === 'Overdue' || v === 'Completed') return v;
+    return 'All';
+  });
+  useEffect(() => {
+    localStorage.setItem('tasks:tab', activeTab);
+  }, [activeTab]);
 
   // Create Task state
   const [showCreate, setShowCreate] = useState(false);
