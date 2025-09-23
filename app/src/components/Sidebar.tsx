@@ -13,7 +13,7 @@ const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>
   top: 0;
   left: 0;
   border-right: 1px solid ${props => props.theme.colors.borders};
-  padding: 1rem 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   z-index: 100;
@@ -38,9 +38,10 @@ const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>
 `;
 
 const LogoContainer = styled.div<{ $collapsed?: boolean }>`
-  padding: 1.5rem;
+  height: 72px; /* match navbar visual height */
+  padding: 0 1rem;
   border-bottom: 1px solid ${props => props.theme.colors.borders};
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   display: ${props => props.$collapsed ? 'none' : 'flex'};
   justify-content: center;
   align-items: center;
@@ -59,7 +60,10 @@ const CollapsedLogoWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
+  height: 72px; /* match navbar visual height */
+  padding: 0 1rem;
+  border-bottom: 1px solid ${props => props.theme.colors.borders};
+  margin-bottom: 0;
 
   @media (max-width: 1024px) {
     display: none;
@@ -192,7 +196,7 @@ const ApplicationsIcon = () => (
 
 const TasksIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2z" />
   </svg>
 );
 
@@ -204,7 +208,7 @@ const DocumentsIcon = () => (
 
 const InsightsIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2z" />
   </svg>
 );
 

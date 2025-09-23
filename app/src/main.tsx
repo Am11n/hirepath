@@ -21,6 +21,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { Search } from './pages/Search'
 import { ThemeModeProvider } from './contexts/ThemeModeProvider'
+import RoutePersistence from './components/RoutePersistence'
 
 // Protected routes that use AppLayout
 const protectedRoutes = [
@@ -84,22 +85,28 @@ const protectedRoutes = [
 ];
 
 const router = createBrowserRouter([
-  { path: '/', element: <App /> },
-  { path: '/about', element: <About /> },
-  { path: '/features', element: <Features /> },
-  { path: '/blog', element: <Blog /> },
-  { path: '/privacy', element: <PrivacyPolicy /> },
-  { path: '/signin', element: <Login /> },
-  { path: '/signup', element: <Signup /> },
-  // Protected routes
-  ...protectedRoutes.map(route => ({
-    path: route.path,
-    element: (
-      <ProtectedRoute>
-        {route.element}
-      </ProtectedRoute>
-    )
-  }))
+  {
+    path: '/',
+    element: <RoutePersistence />,
+    children: [
+      { index: true, element: <App /> },
+      { path: 'about', element: <About /> },
+      { path: 'features', element: <Features /> },
+      { path: 'blog', element: <Blog /> },
+      { path: 'privacy', element: <PrivacyPolicy /> },
+      { path: 'signin', element: <Login /> },
+      { path: 'signup', element: <Signup /> },
+      // Protected routes
+      ...protectedRoutes.map(route => ({
+        path: route.path.replace(/^\//, ''),
+        element: (
+          <ProtectedRoute>
+            {route.element}
+          </ProtectedRoute>
+        )
+      }))
+    ]
+  }
 ])
 
 createRoot(document.getElementById('root')!).render(

@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { supabase } from '../lib/supabaseClient';
@@ -327,6 +327,22 @@ const TopBar = styled.div`
   }
 `;
 
+const ViewToggle = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`;
+
+const ToggleButton = styled.button<{ $active?: boolean }>`
+  background: ${p => p.$active ? p.theme.colors.primary : 'rgba(255,255,255,0.06)'};
+  color: ${p => p.$active ? '#fff' : p.theme.colors.headings};
+  border: 1px solid ${p => p.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
 const ModalBackdrop = styled.div`
   position: fixed;
   inset: 0;
@@ -417,14 +433,124 @@ const ActionButton = styled.button`
   cursor: pointer;
 `;
 
+const DeleteIconButton = styled.button`
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  width: 36px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+`;
+
+// Kanban styles for tasks
+const TaskKanban = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  @media (min-width: 768px) { grid-template-columns: repeat(3, 1fr); }
+`;
+
+const TaskColumn = styled.div<{ $variant: 'todo' | 'in_progress' | 'done' }>`
+  backdrop-filter: saturate(120%) blur(6px);
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid ${props => props.theme.colors.borders};
+  background: ${props => {
+    const v = props.$variant;
+    const bg = v === 'todo'
+      ? 'rgba(59, 130, 246, 0.18)'
+      : v === 'in_progress'
+        ? 'rgba(234, 179, 8, 0.18)'
+        : 'rgba(34, 197, 94, 0.18)';
+    return `linear-gradient(to bottom right, ${bg}, rgba(255,255,255,0.07))`;
+  }};
+`;
+
+const TaskColumnHeader = styled.h3`
+  color: ${props => props.theme.colors.headings};
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+`;
+
+const TaskCard = styled.div`
+  background: rgba(255,255,255,0.06);
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 10px;
+  padding: 0.6rem;
+  margin-bottom: 0.5rem;
+  cursor: grab;
+`;
+
+const AddMini = styled.button`
+  background: rgba(255,255,255,0.08);
+  color: ${props => props.theme.colors.headings};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+const SecondaryButton = styled.button`
+  background: rgba(255,255,255,0.06);
+  color: ${props => props.theme.colors.headings};
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgba(255,255,255,0.1);
+  }
+
+  &:focus {
+    outline: 2px solid ${props => props.theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
+const PrimaryButton = styled.button`
+  background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 0 0 2px ${props => props.theme.colors.primary}, 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  &:focus {
+    outline: 2px solid ${props => props.theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
 type ActivityRow = {
   id: string;
   title: string;
   due_date: string | null;
   completed: boolean;
+  // Optional status column (if present in DB)
+  status?: 'todo' | 'in_progress' | 'done' | string;
   job_application_id: string | null;
   type: 'note' | 'call' | 'email' | 'meeting' | 'other' | string;
   created_at: string;
+  description?: string | null; // used as Notes
 };
 
 export const Tasks: FC = () => {
@@ -433,7 +559,17 @@ export const Tasks: FC = () => {
   const [rows, setRows] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'All' | 'Due Today' | 'Overdue' | 'Completed'>('All');
+  const [hasStatusCol, setHasStatusCol] = useState<boolean>(false);
+  const [view, setView] = useState<'list' | 'kanban'>(() => (localStorage.getItem('tasks:view') === 'kanban' ? 'kanban' : 'list'));
+  useEffect(() => { localStorage.setItem('tasks:view', view); }, [view]);
+  const [activeTab, setActiveTab] = useState<'All' | 'Due Today' | 'Overdue' | 'Completed'>(() => {
+    const v = localStorage.getItem('tasks:tab');
+    if (v === 'Due Today' || v === 'Overdue' || v === 'Completed') return v;
+    return 'All';
+  });
+  useEffect(() => {
+    localStorage.setItem('tasks:tab', activeTab);
+  }, [activeTab]);
 
   // Create Task state
   const [showCreate, setShowCreate] = useState(false);
@@ -443,7 +579,13 @@ export const Tasks: FC = () => {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [applicationId, setApplicationId] = useState<string>('');
-  const [appOptions, setAppOptions] = useState<Array<{ id: string; company_name: string; position: string }>>([]);
+  const [appOptions, setAppOptions] = useState<Array<{ id: string; company_name: string; position: string; notes: string | null }>>([]);
+  const appById = useMemo(() => {
+    const map = new Map<string, { id: string; company_name: string; position: string; notes: string | null }>();
+    appOptions.forEach(o => map.set(o.id, o));
+    return map;
+  }, [appOptions]);
+  const [createStatus, setCreateStatus] = useState<'todo' | 'in_progress' | 'done' | null>(null);
 
   // Edit Task state
   const [showEdit, setShowEdit] = useState(false);
@@ -453,24 +595,45 @@ export const Tasks: FC = () => {
   const [eType, setEType] = useState<'note' | 'call' | 'email' | 'meeting' | 'other'>('note');
   const [eCompleted, setECompleted] = useState(false);
   const [eApplicationId, setEApplicationId] = useState<string>('');
+  const [eNotes, setENotes] = useState<string>('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [saveErrorEdit, setSaveErrorEdit] = useState<string | null>(null);
+
+  // Delete Task state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  // Preview state (non-edit)
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewTask, setPreviewTask] = useState<ActivityRow | null>(null);
+
+  const openPreview = (row: ActivityRow) => {
+    setPreviewTask(row);
+    setShowPreview(true);
+  };
 
   useEffect(() => {
     let isMounted = true;
     const fetchTasks = async () => {
       if (!user) return;
+      // Probe for optional status column
+      try {
+        const probe = await supabase.from('activities').select('status').limit(1);
+        if (!probe.error) setHasStatusCol(true);
+      } catch { /* ignore */ }
       setLoading(true);
       setError(null);
+      const tasksPromise = hasStatusCol
+        ? supabase
+            .from('activities')
+            .select('id, title, due_date, completed, status, job_application_id, type, created_at, description')
+        : supabase
+            .from('activities')
+            .select('id, title, due_date, completed, job_application_id, type, created_at, description');
       const [tasksRes, appsRes] = await Promise.all([
-        supabase
-          .from('activities')
-          .select('id, title, due_date, completed, job_application_id, type, created_at')
-          .eq('user_id', user.id)
-          .order('due_date', { ascending: true }),
+        tasksPromise.eq('user_id', user.id).order('due_date', { ascending: true }),
         supabase
           .from('job_applications')
-          .select('id, company_name, position')
+          .select('id, company_name, position, notes')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
       ]);
@@ -482,21 +645,26 @@ export const Tasks: FC = () => {
         setRows((tasksRes.data || []) as ActivityRow[]);
       }
       if (!appsRes.error && appsRes.data) {
-        setAppOptions(appsRes.data as Array<{ id: string; company_name: string; position: string }>);
+        setAppOptions(appsRes.data as Array<{ id: string; company_name: string; position: string; notes: string | null }>);
       }
       setLoading(false);
     };
     fetchTasks();
     return () => { isMounted = false };
-  }, [user]);
+  }, [user, hasStatusCol]);
 
   const refresh = async () => {
     if (!user) return;
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase
-      .from('activities')
-      .select('id, title, due_date, completed, job_application_id, type, created_at')
+    const tasksQuery = hasStatusCol
+      ? supabase
+          .from('activities')
+          .select('id, title, due_date, completed, status, job_application_id, type, created_at, description')
+      : supabase
+          .from('activities')
+          .select('id, title, due_date, completed, job_application_id, type, created_at, description');
+    const { data, error } = await tasksQuery
       .eq('user_id', user.id)
       .order('due_date', { ascending: true });
     if (error) {
@@ -525,6 +693,11 @@ export const Tasks: FC = () => {
     setShowCreate(true);
   };
 
+  const openCreateInStatus = (statusKey: 'todo' | 'in_progress' | 'done') => {
+    setCreateStatus(statusKey);
+    openCreate();
+  };
+
   const saveTask = async () => {
     if (!user) return;
     if (!title.trim()) {
@@ -538,18 +711,20 @@ export const Tasks: FC = () => {
     setSaving(true);
     setSaveError(null);
     try {
-      const insert = {
+      const insert: Record<string, unknown> = {
         user_id: user.id,
         job_application_id: applicationId,
         title: title.trim(),
         description: null,
         due_date: dueDate || null,
-        completed: false,
+        completed: createStatus === 'done' ? true : false,
         type: taskType,
       };
+      if (hasStatusCol && createStatus) insert.status = createStatus;
       const { error } = await supabase.from('activities').insert(insert);
       if (error) throw error;
       setShowCreate(false);
+      setCreateStatus(null);
       await refresh();
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to create task';
@@ -567,6 +742,12 @@ export const Tasks: FC = () => {
     setEType(t === 'note' || t === 'call' || t === 'email' || t === 'meeting' || t === 'other' ? (t as 'note' | 'call' | 'email' | 'meeting' | 'other') : 'note');
     setECompleted(!!row.completed);
     setEApplicationId(row.job_application_id || '');
+    if (row.job_application_id) {
+      const a = appById.get(row.job_application_id);
+      setENotes((a?.notes || ''));
+    } else {
+      setENotes((row.description || ''));
+    }
     setSaveErrorEdit(null);
     setShowEdit(true);
   };
@@ -590,6 +771,7 @@ export const Tasks: FC = () => {
         type: eType,
         completed: eCompleted,
         job_application_id: eApplicationId,
+        description: (!eApplicationId && eNotes.trim()) ? eNotes.trim() : null,
       };
       const { error } = await supabase
         .from('activities')
@@ -597,6 +779,14 @@ export const Tasks: FC = () => {
         .eq('id', editId)
         .eq('user_id', user.id);
       if (error) throw error;
+      // If linked to application, also update app notes to keep in sync
+      if (eApplicationId) {
+        await supabase
+          .from('job_applications')
+          .update({ notes: eNotes.trim() ? eNotes.trim() : null })
+          .eq('id', eApplicationId)
+          .eq('user_id', user.id);
+      }
       setShowEdit(false);
       await refresh();
     } catch (e: unknown) {
@@ -607,28 +797,79 @@ export const Tasks: FC = () => {
     }
   };
 
-  const toggleCompleted = async (row: ActivityRow) => {
+  const deleteTask = async (id: string) => {
     if (!user) return;
-    const next = !row.completed;
-    // optimistic update
-    setRows(prev => prev.map(r => r.id === row.id ? { ...r, completed: next } : r));
     const { error } = await supabase
       .from('activities')
-      .update({ completed: next })
-      .eq('id', row.id)
+      .delete()
+      .eq('id', id)
       .eq('user_id', user.id);
-    if (error) {
-      // revert on error
-      setRows(prev => prev.map(r => r.id === row.id ? { ...r, completed: row.completed } : r));
+    if (!error) {
+      await refresh();
     }
+  };
+
+  const updateTaskStatus = async (id: string, to: 'in_progress' | 'done') => {
+    if (!user) return;
+    const payload: Record<string, unknown> = { completed: to === 'done' };
+    if (hasStatusCol) payload.status = to;
+    const { error } = await supabase.from('activities').update(payload).eq('id', id).eq('user_id', user.id);
+    if (!error) {
+      // optimistic reflect
+      setRows(prev => prev.map(r => r.id === id ? { ...r, completed: to === 'done', status: hasStatusCol ? to : r.status } : r));
+      if (previewTask && previewTask.id === id) setPreviewTask({ ...previewTask, completed: to === 'done', status: hasStatusCol ? to : previewTask.status });
+    }
+  };
+
+  const toggleCompleted = async (row: ActivityRow) => {
+    const to = row.completed ? 'in_progress' : 'done';
+    await updateTaskStatus(row.id, to);
+  };
+ 
+  // Kanban helpers
+  const getTaskStatus = (t: ActivityRow): 'todo' | 'in_progress' | 'done' => {
+    if (hasStatusCol) {
+      const s = (t.status || '').toString();
+      if (s === 'in_progress') return 'in_progress';
+      if (s === 'done') return 'done';
+      return 'todo';
+    }
+    return t.completed ? 'done' : 'todo';
+  };
+
+  const tasksBy = (s: 'todo' | 'in_progress' | 'done') => rows.filter(r => getTaskStatus(r) === s);
+
+  const handleTaskDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const allowDrop = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
+  const handleTaskColumnDrop = async (e: React.DragEvent<HTMLDivElement>, to: 'todo' | 'in_progress' | 'done') => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain');
+    if (!id || !user) return;
+    const payload: Record<string, unknown> = {};
+    payload.completed = to === 'done';
+    if (hasStatusCol) payload.status = to;
+    const { error } = await supabase.from('activities').update(payload).eq('id', id).eq('user_id', user.id);
+    if (!error) await refresh();
   };
  
   return (
     <TasksContainer>
       <TopBar>
         <Header>Tasks</Header>
-        <CreateButton onClick={openCreate}>Create Task</CreateButton>
+        <div style={{ display:'flex', gap: '0.5rem', alignItems:'center' }}>
+          <ViewToggle>
+            <ToggleButton $active={view==='list'} onClick={() => setView('list')}>List</ToggleButton>
+            <ToggleButton $active={view==='kanban'} onClick={() => setView('kanban')}>Kanban</ToggleButton>
+          </ViewToggle>
+          <CreateButton onClick={openCreate}>Create Task</CreateButton>
+        </div>
       </TopBar>
+      {view === 'list' && (
+      <>
       <TabsContainer>
         <Tab $active={activeTab === 'All'} onClick={() => setActiveTab('All')}>All</Tab>
         <Tab $active={activeTab === 'Due Today'} onClick={() => setActiveTab('Due Today')}>Due Today</Tab>
@@ -641,17 +882,21 @@ export const Tasks: FC = () => {
         {error && !loading && (<div style={{ color: '#f87171' }}>Error: {error}</div>)}
         {!loading && !error && filtered.length === 0 && (<div>No tasks.</div>)}
         {!loading && !error && filtered.map(task => (
-          <TaskItem key={task.id}>
-            <Checkbox checked={task.completed} onChange={() => toggleCompleted(task)} />
+          <TaskItem key={task.id} onClick={() => openPreview(task)} style={{ cursor: 'pointer' }}>
+            <Checkbox checked={task.completed} onClick={(e)=>e.stopPropagation()} onChange={() => toggleCompleted(task)} />
             <TaskContent>
               <TaskTitle $completed={task.completed}>{task.title}</TaskTitle>
               <TaskDetails>
                 <TaskDueDate>Due: {task.due_date ?? '-'}</TaskDueDate>
-                {task.job_application_id ? (
-                  <TaskApplication onClick={() => navigate('/applications?appId=' + task.job_application_id)}>
-                    Linked application
-                  </TaskApplication>
-                ) : (
+                {task.job_application_id ? (() => {
+                  const a = appById.get(task.job_application_id!);
+                  const label = a ? `${a.company_name} — ${a.position}` : 'Linked application';
+                  return (
+                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + task.job_application_id) }}>
+                      {label}
+                    </TaskApplication>
+                  );
+                })() : (
                   <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>General Task</span>
                 )}
                 <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>Type: {String(task.type)}</span>
@@ -659,11 +904,111 @@ export const Tasks: FC = () => {
               </TaskDetails>
             </TaskContent>
             <RowActions>
-              <ActionButton type="button" onClick={() => openEdit(task)}>Edit</ActionButton>
+              <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(task); }}>Edit</ActionButton>
+              <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>🗑</DeleteIconButton>
             </RowActions>
           </TaskItem>
         ))}
       </TaskListContainer>
+      </>
+      )}
+
+      {view === 'kanban' && (
+        <TaskKanban>
+          <TaskColumn $variant="todo" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'todo')}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <TaskColumnHeader>To Do ({tasksBy('todo').length})</TaskColumnHeader>
+              <AddMini type="button" onClick={() => openCreateInStatus('todo')}>+ Add task</AddMini>
+            </div>
+            {tasksBy('todo').map(t => (
+              <TaskCard key={t.id} draggable onDragStart={(e) => handleTaskDragStart(e, t.id)} title={deadlineStatusLabel(t.due_date)} onClick={() => openPreview(t)} style={{ cursor: 'pointer' }}>
+                <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(t.due_date)}`, paddingTop: '4px' }}>{t.title}</div>
+                {t.job_application_id ? (() => {
+                  const a = appById.get(t.job_application_id!);
+                  const label = a ? `${a.company_name} — ${a.position}` : 'Linked application';
+                  return (
+                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + t.job_application_id) }}>
+                      {label}
+                    </TaskApplication>
+                  );
+                })() : (
+                  <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>General Task</span>
+                )}
+                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {t.due_date ?? '-'}</div>
+                <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
+                  <div style={{ display:'flex', gap: '0.4rem' }}>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>Edit</ActionButton>
+                    <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                  </div>
+                </div>
+              </TaskCard>
+            ))}
+          </TaskColumn>
+
+          <TaskColumn $variant="in_progress" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'in_progress')}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <TaskColumnHeader>In Progress ({tasksBy('in_progress').length})</TaskColumnHeader>
+              <AddMini type="button" onClick={() => openCreateInStatus('in_progress')}>+ Add task</AddMini>
+            </div>
+            {tasksBy('in_progress').map(t => (
+              <TaskCard key={t.id} draggable onDragStart={(e) => handleTaskDragStart(e, t.id)} title={deadlineStatusLabel(t.due_date)} onClick={() => openPreview(t)} style={{ cursor: 'pointer' }}>
+                <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(t.due_date)}`, paddingTop: '4px' }}>{t.title}</div>
+                {t.job_application_id ? (() => {
+                  const a = appById.get(t.job_application_id!);
+                  const label = a ? `${a.company_name} — ${a.position}` : 'Linked application';
+                  return (
+                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + t.job_application_id) }}>
+                      {label}
+                    </TaskApplication>
+                  );
+                })() : (
+                  <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>General Task</span>
+                )}
+                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {t.due_date ?? '-'}</div>
+                <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
+                  <div style={{ display:'flex', gap: '0.4rem' }}>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>Edit</ActionButton>
+                    <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                  </div>
+                </div>
+              </TaskCard>
+            ))}
+          </TaskColumn>
+
+          <TaskColumn $variant="done" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'done')}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <TaskColumnHeader>Done ({tasksBy('done').length})</TaskColumnHeader>
+              <AddMini type="button" onClick={() => openCreateInStatus('done')}>+ Add task</AddMini>
+            </div>
+            {tasksBy('done').map(t => (
+              <TaskCard key={t.id} draggable onDragStart={(e) => handleTaskDragStart(e, t.id)} onClick={() => openPreview(t)} style={{ cursor: 'pointer' }}>
+                <div style={{ fontWeight: 700 }}>{t.title}</div>
+                {t.job_application_id ? (() => {
+                  const a = appById.get(t.job_application_id!);
+                  const label = a ? `${a.company_name} — ${a.position}` : 'Linked application';
+                  return (
+                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + t.job_application_id) }}>
+                      {label}
+                    </TaskApplication>
+                  );
+                })() : (
+                  <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>General Task</span>
+                )}
+                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {t.due_date ?? '-'}</div>
+                <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
+                  <div style={{ display:'flex', gap: '0.4rem' }}>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>Edit</ActionButton>
+                    <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                  </div>
+                </div>
+              </TaskCard>
+            ))}
+          </TaskColumn>
+        </TaskKanban>
+      )}
 
       {(!loading && !error && rows.length === 0) && (
         <EmptyStateContainer>
@@ -757,6 +1102,12 @@ export const Tasks: FC = () => {
                 </Select>
               </div>
             </ModalRow>
+            <ModalRow>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <Label htmlFor="e-notes">Notes</Label>
+                <Input as="textarea" id="e-notes" rows={4} value={eNotes} onChange={(e) => setENotes(e.target.value)} />
+              </div>
+            </ModalRow>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input id="e-completed" type="checkbox" checked={eCompleted} onChange={(e) => setECompleted(e.target.checked)} />
               <label htmlFor="e-completed" style={{ color: 'inherit', fontSize: '0.9rem' }}>Completed</label>
@@ -769,8 +1120,99 @@ export const Tasks: FC = () => {
           </ModalCard>
         </ModalBackdrop>
       )}
+
+      {confirmDeleteId && (
+        <ModalBackdrop>
+          <ModalCard>
+            <ModalTitle>Delete task</ModalTitle>
+            <p style={{ color: '#94A3B8', margin: '0 0 1rem 0' }}>
+              Are you sure you want to delete this task? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <button onClick={() => setConfirmDeleteId(null)} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>Cancel</button>
+              <button onClick={async () => { if (confirmDeleteId) { await deleteTask(confirmDeleteId); } setConfirmDeleteId(null); }} style={{ background: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>Delete</button>
+            </div>
+          </ModalCard>
+        </ModalBackdrop>
+      )}
+
+      {showPreview && previewTask && (
+        <ModalBackdrop>
+          <ModalCard onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>Task Details</ModalTitle>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Title</div>
+            <div style={{ color: 'inherit', fontWeight: 600, marginBottom: '0.75rem' }}>{previewTask.title}</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'0.75rem' }}>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Type</div>
+                <div style={{ color:'inherit' }}>{String(previewTask.type)}</div>
+              </div>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Due Date</div>
+                <div style={{ color:'inherit' }}>{previewTask.due_date ?? '-'}</div>
+              </div>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Status</div>
+                <div style={{ color:'inherit' }}>
+                  {(() => {
+                    const label = (() => {
+                      if (previewTask.completed) return 'Done';
+                      const d = previewTask.due_date ? new Date(previewTask.due_date) : null;
+                      const today = new Date(new Date().toDateString());
+                      if (d && d.getTime() < today.getTime()) return 'Overdue';
+                      return 'In Progress';
+                    })();
+                    return <span>{label}</span>;
+                  })()}
+                </div>
+              </div>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Created</div>
+                <div style={{ color:'inherit' }}>{new Date(previewTask.created_at).toLocaleDateString()}</div>
+              </div>
+            </div>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Linked Application</div>
+            <div style={{ marginBottom:'0.75rem' }}>
+              {previewTask.job_application_id ? (()=>{ const a = appById.get(previewTask.job_application_id!); const label = a ? `${a.company_name} — ${a.position}` : 'Open application'; return (<TaskApplication onClick={() => navigate('/applications?appId='+previewTask.job_application_id)}>{label}</TaskApplication>); })() : (<span style={{ color:'#94A3B8' }}>None</span>)}
+            </div>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Notes</div>
+            <div style={{ color: 'inherit', whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>{
+              previewTask.job_application_id
+                ? (()=>{ const a = appById.get(previewTask.job_application_id!); return (a?.notes || '—'); })()
+                : (previewTask.description || '—')
+            }</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <SecondaryButton type="button" onClick={() => setShowPreview(false)}>Close</SecondaryButton>
+              <PrimaryButton type="button" onClick={() => { setShowPreview(false); openEdit(previewTask); }}>Edit</PrimaryButton>
+            </div>
+          </ModalCard>
+        </ModalBackdrop>
+      )}
     </TasksContainer>
   );
 };
+
+function deadlineStatusLabel(due: string | null): string {
+  const dColor = ((): 'green' | 'yellow' | 'red' => {
+    if (!due) return 'green';
+    const today = new Date();
+    const dueDate = new Date(due);
+    const diffDays = Math.floor((dueDate.getTime() - new Date(today.toDateString()).getTime()) / (1000*60*60*24));
+    if (diffDays < 0) return 'red';
+    if (diffDays <= 3) return 'yellow';
+    return 'green';
+  })();
+  return dColor === 'red' ? 'Overdue' : dColor === 'yellow' ? 'Due soon' : 'On track';
+}
+
+function deadlineColor(due: string | null): string {
+  if (!due) return '#34C75E'; // Green for no due date
+  const today = new Date();
+  const dueDate = new Date(due);
+  const diffDays = Math.floor((dueDate.getTime() - new Date(today.toDateString()).getTime()) / (1000*60*60*24));
+  if (diffDays < 0) return '#EF4444'; // Red for overdue
+  if (diffDays <= 3) return '#F59E0B'; // Yellow for due soon
+  return '#34C75E'; // Green for on track
+}
 
 export default Tasks;

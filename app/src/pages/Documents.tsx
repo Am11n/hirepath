@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useCallback } from 'react';
 import styled from 'styled-components';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
@@ -620,7 +621,7 @@ export const Documents: FC = () => {
     return f ? f.position : '-';
   };
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     setError(null);
@@ -684,11 +685,11 @@ export const Documents: FC = () => {
     }));
     setRows(withUrls);
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     refresh();
-  }, [user]);
+  }, [user, refresh]);
 
   const handleChooseFiles = () => fileInputRef.current?.click();
 
