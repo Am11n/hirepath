@@ -483,6 +483,23 @@ const Card = styled.div`
   padding: 0.6rem;
   margin-bottom: 0.5rem;
   cursor: grab;
+  position: relative;
+`;
+
+const CardDeleteBtn = styled.button`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid ${p => p.theme.colors.borders};
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 `;
 
 const SmallSelectInline = styled.select`
@@ -1006,6 +1023,7 @@ export const Applications: FC = () => {
 
   const actionOpenIdRef = useRef<string | null>(null);
   const [actionOpenId, setActionOpenId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const onDocClick = () => {
@@ -1336,6 +1354,9 @@ export const Applications: FC = () => {
               </div>
               {byStatus('Applied').map(app => (
                 <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                    🗑
+                  </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
                   <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
@@ -1355,6 +1376,9 @@ export const Applications: FC = () => {
               </div>
               {byStatus('Interview').map(app => (
                 <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                    🗑
+                  </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
                   <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
@@ -1374,6 +1398,9 @@ export const Applications: FC = () => {
               </div>
               {byStatus('Offer').map(app => (
                 <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                    🗑
+                  </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
                   <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
@@ -1393,6 +1420,9 @@ export const Applications: FC = () => {
               </div>
               {byStatus('Rejected').map(app => (
                 <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                    🗑
+                  </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
                   <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>{app.company_name}</div>
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
@@ -1483,6 +1513,20 @@ export const Applications: FC = () => {
             <ModalActions>
               <SecondaryButton type="button" onClick={() => setShowEdit(false)} disabled={savingEdit}>Cancel</SecondaryButton>
               <PrimaryButton type="button" onClick={handleUpdate} disabled={savingEdit}>{savingEdit ? 'Saving…' : 'Save Changes'}</PrimaryButton>
+            </ModalActions>
+          </ModalCard>
+        </ModalBackdrop>
+      )}
+      {confirmDeleteId && (
+        <ModalBackdrop>
+          <ModalCard>
+            <ModalTitle>Delete application</ModalTitle>
+            <p style={{ color: '#94A3B8', margin: '0 0 1rem 0' }}>
+              Are you sure you want to delete this application? This action cannot be undone.
+            </p>
+            <ModalActions>
+              <SecondaryButton type="button" onClick={() => setConfirmDeleteId(null)}>Cancel</SecondaryButton>
+              <DangerButton type="button" onClick={async () => { await deleteApplication(confirmDeleteId); setConfirmDeleteId(null); }}>Delete</DangerButton>
             </ModalActions>
           </ModalCard>
         </ModalBackdrop>
