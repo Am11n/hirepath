@@ -708,6 +708,10 @@ type ApplicationRow = {
   interview_date?: string | null;
   offer_date?: string | null;
   rejected_date?: string | null;
+  notes?: string | null;
+  url?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 export const Applications: FC = () => {
@@ -741,6 +745,7 @@ export const Applications: FC = () => {
   const [eAppliedDate, setEAppliedDate] = useState<string>('');
   const [eStatusDate, setEStatusDate] = useState<string>('');
   const [eUrl, setEUrl] = useState('');
+  const [eNotes, setENotes] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [saveErrorEdit, setSaveErrorEdit] = useState<string | null>(null);
 
@@ -760,6 +765,10 @@ export const Applications: FC = () => {
     const v = localStorage.getItem('applications:view');
     return v === 'kanban' ? 'kanban' : 'list';
   });
+  // Preview modal (non-edit)
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewApp, setPreviewApp] = useState<ApplicationRow | null>(null);
+  const openPreview = (row: ApplicationRow) => { setPreviewApp(row); setShowPreview(true); };
   useEffect(() => {
     localStorage.setItem('applications:view', view);
   }, [view]);
@@ -816,7 +825,7 @@ export const Applications: FC = () => {
     setError(null);
     let query = supabase
       .from('job_applications')
-      .select('id, company_name, position, applied_date, status, interview_date, offer_date, rejected_date')
+      .select('id, company_name, position, applied_date, status, interview_date, offer_date, rejected_date, notes, url, created_at, updated_at')
       .eq('user_id', user.id);
 
     if (statusFilter !== 'all') {
@@ -949,7 +958,8 @@ export const Applications: FC = () => {
     else if (s === 'Offer') setEStatusDate(toLocalDateInput(row.offer_date ?? null));
     else if (s === 'Rejected') setEStatusDate(toLocalDateInput(row.rejected_date ?? null));
     else setEStatusDate('');
-    setEUrl('');
+    setEUrl(row.url || '');
+    setENotes(row.notes || '');
     setSaveErrorEdit(null);
     setShowEdit(true);
   };
@@ -969,6 +979,7 @@ export const Applications: FC = () => {
         status: eStatus || 'Applied',
         applied_date: eAppliedDate || null,
         url: eUrl.trim() || null,
+        notes: eNotes.trim() ? eNotes.trim() : null,
       };
       update.interview_date = null;
       update.offer_date = null;
@@ -1239,7 +1250,7 @@ export const Applications: FC = () => {
                 {error && !loading && (<tr><TableCell colSpan={8} style={{ color: '#f87171' }}>Error: {error}</TableCell></tr>)}
                 {!loading && !error && rows.length === 0 && (<tr><TableCell colSpan={8}>No applications yet.</TableCell></tr>)}
                 {!loading && !error && rows.map(app => (
-                  <TableRow key={app.id} onClick={() => handleOpenEdit(app)} style={{ cursor: 'pointer' }}>
+                  <TableRow key={app.id} onClick={() => openPreview(app)} style={{ cursor: 'pointer' }}>
                     <TableCell onClick={(e)=>e.stopPropagation()}>
                       <Checkbox checked={selectedIds.has(app.id)} onChange={()=>toggleOne(app.id)} />
                     </TableCell>
@@ -1353,7 +1364,7 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Applied').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1362,7 +1373,7 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
+                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
                   </div>
                 </Card>
               ))}
@@ -1375,7 +1386,7 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Interview').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1384,7 +1395,7 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
+                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
                   </div>
                 </Card>
               ))}
@@ -1397,7 +1408,7 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Offer').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1406,7 +1417,7 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
+                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
                   </div>
                 </Card>
               ))}
@@ -1419,7 +1430,7 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Rejected').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)}>
+                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1428,7 +1439,7 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={() => handleOpenEdit(app)}>Edit</EditButton>
+                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
                   </div>
                 </Card>
               ))}
@@ -1509,6 +1520,12 @@ export const Applications: FC = () => {
                 <Input id="e-url" placeholder="https://..." value={eUrl} onChange={(e) => setEUrl(e.target.value)} />
               </div>
             </ModalRow>
+            <ModalRow>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <Label htmlFor="e-notes">Notes</Label>
+                <Input as="textarea" id="e-notes" rows={4} value={eNotes} onChange={(e) => setENotes(e.target.value)} />
+              </div>
+            </ModalRow>
             {saveErrorEdit && <div style={{ color: '#f87171', marginTop: '0.25rem' }}>{saveErrorEdit}</div>}
             <ModalActions>
               <SecondaryButton type="button" onClick={() => setShowEdit(false)} disabled={savingEdit}>Cancel</SecondaryButton>
@@ -1528,6 +1545,67 @@ export const Applications: FC = () => {
               <SecondaryButton type="button" onClick={() => setConfirmDeleteId(null)}>Cancel</SecondaryButton>
               <DangerButton type="button" onClick={async () => { await deleteApplication(confirmDeleteId); setConfirmDeleteId(null); }}>Delete</DangerButton>
             </ModalActions>
+          </ModalCard>
+        </ModalBackdrop>
+      )}
+
+      {showPreview && previewApp && (
+        <ModalBackdrop>
+          <ModalCard onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>Application Details</ModalTitle>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Company</div>
+            <div style={{ color: 'inherit', fontWeight: 600, marginBottom: '0.5rem' }}>{previewApp.company_name}</div>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Position</div>
+            <div style={{ color: 'inherit', marginBottom: '0.75rem' }}>{previewApp.position}</div>
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'0.75rem' }}>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Status</div>
+                <div style={{ color:'inherit' }}>{String(previewApp.status)}</div>
+              </div>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Applied Date</div>
+                <div style={{ color:'inherit' }}>{previewApp.applied_date ?? '-'}</div>
+              </div>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Status Date</div>
+                <div style={{ color:'inherit' }}>{
+                  (() => {
+                    const s = String(previewApp.status);
+                    if (s === 'Interview' && previewApp.interview_date) return previewApp.interview_date;
+                    if (s === 'Offer' && previewApp.offer_date) return previewApp.offer_date;
+                    if (s === 'Rejected' && previewApp.rejected_date) return previewApp.rejected_date;
+                    return '-';
+                  })()
+                }</div>
+              </div>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Created</div>
+                <div style={{ color:'inherit' }}>{(previewApp as any).created_at ? new Date((previewApp as any).created_at).toLocaleDateString() : '-'}</div>
+              </div>
+              <div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Updated</div>
+                <div style={{ color:'inherit' }}>{(previewApp as any).updated_at ? new Date((previewApp as any).updated_at).toLocaleDateString() : '-'}</div>
+              </div>
+            </div>
+
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Next Action</div>
+            <div style={{ color:'inherit', marginBottom:'0.75rem' }}>{
+              (()=>{ const na = nextActionByApp[previewApp.id]; if (!na) return '-'; const dueStr = na.due ? ` • ${new Date(na.due).toLocaleDateString()}` : ''; return `${na.title}${dueStr}`; })()
+            }</div>
+
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Notes</div>
+            <div style={{ color: 'inherit', whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>{previewApp.notes || '-'}</div>
+
+            {previewApp.url && (
+              <div style={{ marginBottom: '1rem' }}>
+                <a href={previewApp.url} target="_blank" rel="noreferrer" style={{ color: '#60a5fa', textDecoration: 'underline' }}>Open job link</a>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <SecondaryButton type="button" onClick={() => setShowPreview(false)}>Close</SecondaryButton>
+              <PrimaryButton type="button" onClick={() => { setShowPreview(false); handleOpenEdit(previewApp); }}>Edit</PrimaryButton>
+            </div>
           </ModalCard>
         </ModalBackdrop>
       )}

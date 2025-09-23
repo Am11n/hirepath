@@ -71,7 +71,7 @@ HirePath helps you track every step of your job search. Capture applications, sc
 ## Repository layout
 
 ```
-hirepath-1/
+hirepath/
   app/                 # application source (package.json lives here)
     src/
     public/
@@ -177,4 +177,4 @@ Open http://localhost:4173.
 
 ## License
 
-MIT © 2025 – Xala Technologiess
+MIT © 2025 – Amin Ismail
