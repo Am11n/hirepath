@@ -1,161 +1,180 @@
-# 🚀 HirePath – Din klare vei fra søknad til jobb
+# HirePath
 
-HirePath er en moderne, mobilvennlig applikasjon for å spore jobbsøknader.  
-Den gir deg full kontroll på søknadsprosessen – fra "Draft" til "Offer" – og hjelper deg å følge opp intervjuer, aktiviteter og dokumenter.  
-
-Applikasjonen er bygget som et moderne React-prosjekt med **React 19**, **TypeScript**, **Vite 7**, **styled-components 6** og **Supabase** (Auth, Postgres, Storage, Edge Functions).  
-Deploy skjer via **Vercel** for enkel CI/CD.
+HirePath is a React + TypeScript application for managing job applications end‑to‑end: applications, tasks, documents, insights and a personalized dashboard. The stack uses Vite, styled‑components, and Supabase (Auth, Postgres, Storage).
 
 ---
 
-## ✨ Funksjoner
+## Overview
 
-- **Dashboard med Kanban**  
-  Dra-og-slipp søknader mellom statuser: Draft, Applied, Interview, Offer, Rejected.
-
-- **Søknadsdetaljer**  
-  Tabs for Overview, Activities og Documents med full oversikt over hver søknad.
-
-- **Aktiviteter & Påminnelser**  
-  Planlegg oppfølging, sett deadlines og få e-postvarsler når en oppgave forfaller.
-
-- **Dokumenthåndtering**  
-  Last opp CV-er, søknadsbrev eller andre filer til Supabase Storage, med sikre signerte nedlastingslenker.
-
-- **Søk og filtre**  
-  Globalt søk på selskap, rolle og notater, med filtre for status, prioritet, frister og lokasjon.
-
-- **Statistikk og eksport**  
-  KPI-kort, grafer og eksport til CSV for å følge progresjonen din.
-
-- **Tilgjengelighet & mobilvennlighet**  
-  Tastatursnarveier (N for ny søknad, F for filter), ARIA-støtte og responsivt design.
+HirePath helps you track every step of your job search. Capture applications, schedule and complete tasks, upload and link documents, and review insights on your progress. The UI is fast, mobile‑friendly, and supports light/dark themes with a refined "glass" look.
 
 ---
 
-## 🖼 Mockups
+## Features
 
-HirePath er designet i en **Playful Startup-stil** inspirert av Notion/Airtable, med runde kort, myke farger og et lett uttrykk.
+- Authentication and profile
+  - Email sign‑up/sign‑in via Supabase Auth
+  - First/last name captured and used for a personalized dashboard greeting
+  - Settings (Profile) with avatar upload to Supabase Storage
 
-- **Homepage** – Introduksjon med "hero" og call-to-action  
-- **Dashboard** – Oversikt og Kanban  
-- **Application detail** – Tabs for søknadsinfo, aktiviteter og dokumenter  
-- **Tasks** – Oppgaveliste på tvers av søknader  
-- **Settings** – Profil, avatar og varslingstoggles  
+- Dashboard
+  - Welcome card with upcoming interview date (when applicable)
+  - KPI cards and charts (applications over time, tasks completed vs pending, success rate)
+  - Real‑time updates via Supabase postgres changes
+  - Notification banner when an offer or interview is relevant
 
-*(Se `/mockups`-mappen for bilder av alle sidene.)*
+- Applications
+  - List and Kanban views with persistent selection (remembered across refreshes)
+  - Drag‑and‑drop between Kanban columns (Applied, Interview, Offer, Rejected)
+  - Inline edits: status change on the colored pill, inline date editing for applied date
+  - Status Date column (shows interview/offer/rejected date as relevant)
+  - Sorting (date, company, status) and collapsible filters
+  - Bulk actions (change status, delete)
+  - Per‑row action menu (Edit, Delete, Mark followed up)
+  - Quick add in each Kanban column and counts per column
+  - "Next action" surfaced from activities
 
----
+- Tasks
+  - Create/edit tasks linked to applications; types (note, call, email, meeting, other)
+  - Toggle completed with optimistic UI updates
+  - Tabs: All, Due Today, Overdue, Completed (remembered across refreshes)
 
-## 🛠 Tech Stack
+- Documents
+  - Upload to Supabase Storage `documents` bucket with content‑type and signed download URLs
+  - Reconciliation to ensure uploaded objects appear in the table
+  - Link/unlink to applications, delete from Storage and database
+  - Position (from linked application) displayed; dates formatted for readability
 
-**Core**
-- [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) – moderne og typesikker frontend
-- [Vite 7](https://vitejs.dev/) – rask bundler/dev-server
-- [styled-components 6](https://styled-components.com/) – CSS-in-JS med temaer og dynamiske stiler
-- [pnpm](https://pnpm.io/) – effektiv pakkehåndtering
-- [ESLint (flat config)](https://eslint.org/docs/latest/use/configure/configuration-files-new) + [Prettier](https://prettier.io/) – kodekvalitet og autoformat
+- Insights
+  - KPIs and charts including Application Conversion Funnel (Rejections in funnel),
+    Top Companies Applied To, Job Application Outcomes, Time to First Response
+  - Weekly Progress card (Applications, Interviews, Offers, Rejections)
+  - Filters (time range/position) and drill‑down on selected charts
+  - Real‑time refresh on application changes
 
-**UI & Interaksjon**
-- [Radix UI](https://www.radix-ui.com/) – tilgjengelige og moderne UI primitives
-- [Framer Motion](https://www.framer.com/motion/) – animasjoner og overgangseffekter
-- [React DnD Kit](https://dndkit.com/) – drag-and-drop for Kanban-board
-- [Recharts](https://recharts.org/en-US/) – grafer og KPI-visualisering
-- [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) – formhåndtering og validering
-
-**Backend / Data**
-- [Supabase](https://supabase.com/) – Auth, Postgres database, RLS, Storage for dokumenter, Edge Functions for cron/varsler
-- [Supabase-js v2](https://supabase.com/docs/reference/javascript/start) – klient for Auth, queries og Storage
-
-**Testing & QA**
-- [Vitest](https://vitest.dev/) – unit/integration tester
-- [Playwright](https://playwright.dev/) – ende-til-ende tester
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) – komponenttester
-
-**CI/CD & DevOps**
-- [GitHub Actions](https://docs.github.com/en/actions) – CI for lint, test og build
-- [Vercel](https://vercel.com/) – hosting, preview deploys, prod deploy
-- [Husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/okonet/lint-staged) – pre-commit hooks
-
----
-
-## 📋 Prerequisites
-
-- [Node.js 18+](https://nodejs.org/)  
-- [pnpm 10+](https://pnpm.io/)  
-- [Supabase account](https://supabase.com/) (for Auth, DB og Storage)  
-- [Vercel account](https://vercel.com/) (for deploy)  
-- (Valgfritt) SMTP-leverandør som [Resend](https://resend.com/) eller Supabase Email for varsler  
+- Theming & UX
+  - Light/dark mode with refined glassmorphism for cards, navbar, and sidebar
+  - Gradient page background applied consistently across authenticated pages
+  - Mobile‑friendly layout with overflow fixes and responsive spacing
+  - Persistent last visited route (refresh returns you to where you were)
 
 ---
 
-## 📦 Kom i gang
+## Requirements
 
-### 1. Klon repoet
-```bash
-git clone git@github.com:<ditt-brukernavn>/hirepath.git
-cd hirepath
+- Node.js 18+
+- pnpm 10+
+- Supabase project (URL + anon key)
+
+---
+
+## Repository layout
+
+```
+hirepath-1/
+  app/                 # application source (package.json lives here)
+    src/
+    public/
+    ...
 ```
 
-### 2. Installer avhengigheter
+All commands below are run inside the `app/` directory.
+
+---
+
+## Setup (local)
+
+1. Clone and enter the project
+
+```bash
+git clone https://github.com/<your-org-or-user>/hirepath.git
+cd hirepath-1/app
+```
+
+2. Install dependencies
+
 ```bash
 pnpm install
 ```
 
-### 3. Sett opp miljøvariabler
-Opprett `.env.local`:
+3. Configure environment variables
+
+Create a file named `.env.local` in `app/` with your Supabase credentials:
 
 ```env
-VITE_SUPABASE_URL=<din-supabase-url>
-VITE_SUPABASE_ANON_KEY=<din-anon-key>
+VITE_SUPABASE_URL=https://<your-project>.supabase.co
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
-Merk: med React + Vite må variabler prefikses med `VITE_` for å være tilgjengelige i koden.
+4. Initialize the database schema in Supabase
 
-### 4. Kjør lokalt
+- Open the Supabase SQL editor and run the SQL from:
+  - `app/src/lib/setup.sql`
+
+This creates the core tables (`profiles`, `job_applications`, `activities`, `documents`), enables Row Level Security, and adds the required policies.
+
+5. Configure Storage (documents)
+
+- In the Supabase dashboard → Storage → Create a bucket named `documents` (private).
+- Add Storage RLS policies (SQL editor). Example:
+
+```sql
+-- Allow users to manage files under their own folder: {auth.uid()}/...
+-- Read
+drop policy if exists documents_read on storage.objects;
+create policy documents_read
+  on storage.objects for select
+  using (
+    bucket_id = 'documents'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Insert/Update/Delete
+drop policy if exists documents_write on storage.objects;
+create policy documents_write
+  on storage.objects for all
+  using (
+    bucket_id = 'documents'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  ) with check (
+    bucket_id = 'documents'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+```
+
+6. Lint and build
+
 ```bash
-pnpm dev
+pnpm run lint
+pnpm run build
 ```
-Åpne http://localhost:5173 i nettleseren.
+
+7. Preview the production build locally
+
+```bash
+pnpm run preview -- --host --port 4173
+```
+Open http://localhost:4173.
 
 ---
 
-## 🔒 Sikkerhet
+## Development commands
 
-- Strenge Row Level Security policies i Supabase sikrer at hver bruker bare får tilgang til egne data.
-- Alle dokumenter lagres i en privat bucket og lastes kun ned via signerte URL-er.
-- Rate limiting på skrive-actions forhindrer misbruk.
-
----
-
-## ✅ Status
-
-- [x] Autentisering med Supabase
-- [x] Kanban med CRUD
-- [x] Aktiviteter med varsler
-- [x] Dokumentopplasting og nedlasting
-- [x] CSV-eksport
-- [x] KPI-kort og grafer
-- [x] Mobiloptimalisering
-- [x] Forbedrede UI-komponenter (oppdaterte ikoner, blå fargede elementer)
+- `pnpm run lint` – run ESLint
+- `pnpm run build` – type‑check and build
+- `pnpm run preview` – preview the built app
 
 ---
 
-## 📌 Veikart
+## Troubleshooting
 
-- [ ] Import fra LinkedIn-jobb-URL (metadata-scraper)
-- [ ] Deling med mentor via read-only link
-- [ ] Push-varsler i appen (toast + realtime updates)
-- [ ] Maler for følgebrev per selskap
-
----
-
-## 👨‍💻 Bidra
-
-Pull requests er velkomne! For større endringer, opprett en issue først for å diskutere hva du ønsker å endre.
+- Commands fail in the repository root: change into `app/` first (`cd app`).
+- 403/401 on Storage uploads: verify the `documents` bucket exists and RLS policies include your user folder rule.
+- Data not appearing after upload: ensure the `documents` table exists and that `refresh` logic is calling the reconciliation (already implemented in the app).
+- Environment variables missing at runtime: confirm `.env.local` lives in `app/` and keys start with `VITE_`.
 
 ---
 
-## 📄 Lisens
+## License
 
-MIT © 2025 – Xala Technologies
+MIT © 2025 – Xala Technologiess
