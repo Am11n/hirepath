@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import styled from 'styled-components';
 import { useThemeMode } from '../contexts/themeMode';
+import { useI18n } from '../contexts/I18nProvider';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
@@ -114,6 +115,31 @@ const Inline = styled.div`
   gap: 0.75rem;
   align-items: center;
   flex-wrap: wrap;
+`;
+
+const SectionsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem 1.25rem;
+  }
+  @media (min-width: 1024px) {
+    gap: 1.5rem;
+  }
+`;
+
+// Narrow three-across layout for password fields
+const PasswordRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+`;
+
+const PasswordItem = styled.div`
+  flex: 1 1 220px;
+  max-width: 320px;
 `;
 
 const Label = styled.label`
@@ -298,11 +324,41 @@ const UploadInfo = styled.span`
   font-size: 0.85rem;
 `;
 
+const AvatarWrap = styled.div`
+  position: relative;
+  display: inline-flex;
+`;
+
+const AvatarMenu = styled.div`
+  position: absolute;
+  top: 84px;
+  left: 0;
+  background: ${props => props.theme.glass.dropdown};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  min-width: 180px;
+  z-index: 20;
+  overflow: hidden;
+`;
+
+const AvatarMenuItem = styled.button`
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  color: ${props => props.theme.colors.headings};
+  cursor: pointer;
+  &:hover { background: rgba(255,255,255,0.06); }
+`;
+
 export const Profile: FC = () => {
-  const { mode, setMode } = useThemeMode();
+  const { mode, setMode, fontScale, setFontScale, accent, setAccent } = useThemeMode();
+  const { setLang } = useI18n();
   const { user } = useAuth();
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [language, setLanguage] = useState('English');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -312,7 +368,14 @@ export const Profile: FC = () => {
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarWrapRef = useRef<HTMLDivElement>(null);
 
+  // Password change state
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   useEffect(() => {
     const load = async () => {
       if (!user) return;
@@ -322,15 +385,37 @@ export const Profile: FC = () => {
         .select('full_name')
         .eq('id', user.id)
         .maybeSingle();
-      if (prof?.full_name) setFullName(prof.full_name as string);
+      if (prof?.full_name && typeof prof.full_name === 'string') {
+        const parts = (prof.full_name as string).trim().split(' ');
+        if (!firstName) setFirstName(parts[0] || '');
+        if (!lastName) setLastName(parts.slice(1).join(' ') || '');
+      }
       // Load metadata
       const meta = user.user_metadata as Record<string, unknown> | undefined;
-      if (meta?.username) setUsername(String(meta.username));
-      if (meta?.language) setLanguage(String(meta.language));
+      if (meta?.first_name) setFirstName(String(meta.first_name));
+      if (meta?.last_name) setLastName(String(meta.last_name));
+      if (meta?.language) {
+        const l = String(meta.language);
+        setLanguage(l);
+        // Try to map friendly label -> code
+        if (l.toLowerCase().startsWith('nor')) setLang('nb');
+        else setLang('en');
+      }
       if (meta?.avatar_url) setAvatarUrl(String(meta.avatar_url));
     };
     load();
   }, [user]);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!(e.target instanceof Element)) return;
+      if (avatarWrapRef.current && !avatarWrapRef.current.contains(e.target)) {
+        setAvatarMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -338,19 +423,21 @@ export const Profile: FC = () => {
     setSaveError(null);
     setSaveOk(false);
     try {
+      const full_name = `${firstName || ''} ${lastName || ''}`.trim();
       const { error: upsertErr } = await supabase
         .from('profiles')
-        .upsert({ id: user.id, full_name: fullName, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+        .upsert({ id: user.id, full_name, updated_at: new Date().toISOString() }, { onConflict: 'id' });
       if (upsertErr) throw upsertErr;
-      const { error: metaErr } = await supabase.auth.updateUser({ data: { username, language } });
+      const { error: metaErr } = await supabase.auth.updateUser({ data: { first_name: firstName, last_name: lastName, language } });
       if (metaErr) throw metaErr;
+      // Apply language to i18n provider immediately
+      setLang(language === 'Norwegian' ? 'nb' : 'en');
       setSaveOk(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Could not save';
       setSaveError(message);
     } finally {
       setSaving(false);
-      setTimeout(() => setSaveOk(false), 2000);
     }
   };
 
@@ -369,21 +456,23 @@ export const Profile: FC = () => {
 
     try {
       const ext = file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : 'jpg';
+      // Upload into a dedicated avatars bucket so it won't appear in Documents
       const objectPath = `${user.id}/avatar.${ext}`;
       const { error: upErr } = await supabase.storage
-        .from('documents')
+        .from('avatars')
         .upload(objectPath, file, { contentType: file.type, upsert: true, cacheControl: '3600' });
       if (upErr) throw upErr;
 
       const { data: signed, error: signErr } = await supabase.storage
-        .from('documents')
+        .from('avatars')
         .createSignedUrl(objectPath, 60 * 60 * 24 * 7); // 7 days
       if (signErr) throw signErr;
 
       const url = signed?.signedUrl || null;
       setAvatarUrl(url);
-      const { error: metaErr } = await supabase.auth.updateUser({ data: { avatar_url: url, avatar_path: objectPath } });
+      const { error: metaErr } = await supabase.auth.updateUser({ data: { avatar_url: url, avatar_path: objectPath, first_name: firstName, last_name: lastName } });
       if (metaErr) throw metaErr;
+      setAvatarMenuOpen(false);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Upload failed';
       setAvatarError(message);
@@ -392,39 +481,54 @@ export const Profile: FC = () => {
     }
   };
 
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+    try {
+      const meta = user.user_metadata as Record<string, unknown> | undefined;
+      const avatarPath = meta && typeof meta.avatar_path === 'string' ? (meta.avatar_path as string) : null;
+      if (avatarPath) {
+        await supabase.storage.from('avatars').remove([avatarPath]);
+      }
+      const { error: metaErr } = await supabase.auth.updateUser({ data: { avatar_url: null, avatar_path: null } });
+      if (metaErr) throw metaErr;
+      setAvatarUrl(null);
+      setAvatarMenuOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to remove avatar';
+      setAvatarError(message);
+    }
+  };
+
   return (
     <ProfileContainer>
       <Header>Settings</Header>
-      
+      <SectionsGrid>
       <Section>
         <SectionHeader>Profile Settings</SectionHeader>
         <Form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
-          <TwoCol>
-            <FormGroup>
-              <Label htmlFor="full-name">Full Name</Label>
-              <Input id="full-name" placeholder="Your name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" placeholder="unique-username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            </FormGroup>
-          </TwoCol>
           <FormGroup>
             <Label>Profile Picture</Label>
             <AvatarRow>
-              <AvatarCircle>
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  (user?.email?.charAt(0).toUpperCase() || 'U')
+              <AvatarWrap ref={avatarWrapRef}>
+                <AvatarCircle onClick={() => setAvatarMenuOpen(v => !v)} style={{ cursor:'pointer' }}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    (user?.email?.charAt(0).toUpperCase() || 'U')
+                  )}
+                </AvatarCircle>
+                {avatarMenuOpen && (
+                  <AvatarMenu onClick={(e)=>e.stopPropagation()}>
+                    <AvatarMenuItem type="button" onClick={handleChooseAvatar} disabled={avatarSaving}>Choose Image…</AvatarMenuItem>
+                    {avatarUrl && (
+                      <AvatarMenuItem type="button" onClick={handleRemoveAvatar} disabled={avatarSaving}>Remove Image</AvatarMenuItem>
+                    )}
+                  </AvatarMenu>
                 )}
-              </AvatarCircle>
+              </AvatarWrap>
+              <input ref={fileInputRef} id="avatar" type="file" accept="image/*" onChange={handleAvatarSelected} style={{ display: 'none' }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <SecondaryButton type="button" onClick={handleChooseAvatar} disabled={avatarSaving}>Choose Image</SecondaryButton>
-                  <input ref={fileInputRef} id="avatar" type="file" accept="image/*" onChange={handleAvatarSelected} style={{ display: 'none' }} />
-                </div>
-                <UploadInfo>PNG or JPG, recommended square image</UploadInfo>
+                <UploadInfo>Click the avatar to change or remove</UploadInfo>
                 {avatarSaving && <UploadInfo>Uploading…</UploadInfo>}
                 {avatarError && <span style={{ color: '#f87171' }}>{avatarError}</span>}
               </div>
@@ -432,20 +536,66 @@ export const Profile: FC = () => {
           </FormGroup>
           <TwoCol>
             <FormGroup>
-              <Label htmlFor="new-password">New Password</Label>
-              <Input type="password" id="new-password" placeholder="Enter new password" disabled />
+              <Label htmlFor="first-name">First Name</Label>
+              <Input id="first-name" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </FormGroup>
             <FormGroup>
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input type="password" id="confirm-password" placeholder="Confirm new password" disabled />
+              <Label htmlFor="last-name">Last Name</Label>
+              <Input id="last-name" placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </FormGroup>
           </TwoCol>
+          <PasswordRow>
+            <PasswordItem>
+              <FormGroup>
+                <Label htmlFor="old-password">Old Password</Label>
+                <Input
+                  type="password"
+                  id="old-password"
+                  name="old-password"
+                  placeholder="Enter old password"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  value={oldPassword}
+                  onChange={(e)=>setOldPassword(e.target.value)}
+                />
+              </FormGroup>
+            </PasswordItem>
+            <PasswordItem>
+              <FormGroup>
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  type="password"
+                  id="new-password"
+                  name="new-password"
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e)=>setNewPassword(e.target.value)}
+                />
+              </FormGroup>
+            </PasswordItem>
+            <PasswordItem>
+              <FormGroup>
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  type="password"
+                  id="confirm-password"
+                  name="confirm-password"
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e)=>setConfirmPassword(e.target.value)}
+                />
+              </FormGroup>
+            </PasswordItem>
+          </PasswordRow>
           <FormGroup>
             <Label htmlFor="language">Language</Label>
-            <Select id="language" value={language} onChange={(e) => setLanguage(e.target.value)}>
+            <Select id="language" value={language} onChange={(e) => { const v = e.target.value; setLanguage(v); setLang(v === 'Norwegian' ? 'nb' : 'en'); }}>
               <option>English</option>
-              <option>Norsk</option>
-              <option>Deutsch</option>
+              <option>Norwegian</option>
             </Select>
           </FormGroup>
           <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Profile'}</Button>
@@ -453,7 +603,7 @@ export const Profile: FC = () => {
           {saveError && <span style={{ color: '#f87171' }}>Error: {saveError}</span>}
         </Form>
       </Section>
-      
+       
       <Section>
         <SectionHeader>Notifications</SectionHeader>
         <Form>
@@ -540,14 +690,19 @@ export const Profile: FC = () => {
           <FormGroup>
             <Label>Accent color</Label>
             <Inline>
-              <label><Input type="radio" name="accent" defaultChecked /> Blue</label>
-              <label><Input type="radio" name="accent" /> Purple</label>
-              <label><Input type="radio" name="accent" /> Green</label>
+              <label><Input type="radio" name="accent" checked={accent === 'blue'} onChange={() => setAccent('blue')} /> Blue</label>
+              <label><Input type="radio" name="accent" checked={accent === 'purple'} onChange={() => setAccent('purple')} /> Purple</label>
+              <label><Input type="radio" name="accent" checked={accent === 'green'} onChange={() => setAccent('green')} /> Green</label>
             </Inline>
           </FormGroup>
           <FormGroup>
             <Label htmlFor="font-size">Font size</Label>
-            <Select id="font-size">
+            <Select id="font-size" value={fontScale === 'normal' ? 'Normal' : fontScale === 'large' ? 'Large' : 'Extra Large'} onChange={(e) => {
+              const val = e.target.value;
+              if (val === 'Normal') setFontScale('normal');
+              else if (val === 'Large') setFontScale('large');
+              else setFontScale('xlarge');
+            }}>
               <option>Normal</option>
               <option>Large</option>
               <option>Extra Large</option>
@@ -602,6 +757,7 @@ export const Profile: FC = () => {
         </DescriptionText>
         <DangerButton>Delete Account</DangerButton>
       </Section>
+      </SectionsGrid>
     </ProfileContainer>
   );
 };

@@ -16,12 +16,14 @@ import { Applications } from './pages/Applications'
 import { Tasks } from './pages/Tasks'
 import { Documents } from './pages/Documents'
 import { Insights } from './pages/Insights'
+import { Calendar } from './pages/Calendar'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { Search } from './pages/Search'
 import { ThemeModeProvider } from './contexts/ThemeModeProvider'
 import RoutePersistence from './components/RoutePersistence'
+import { I18nProvider } from './contexts/I18nProvider'
 
 // Protected routes that use AppLayout
 const protectedRoutes = [
@@ -81,6 +83,14 @@ const protectedRoutes = [
       </AppLayout>
     )
   },
+  {
+    path: '/calendar',
+    element: (
+      <AppLayout>
+        <Calendar />
+      </AppLayout>
+    )
+  },
   // Add other protected routes here as they are created
 ];
 
@@ -113,9 +123,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeModeProvider>
       <GlobalStyle />
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </I18nProvider>
     </ThemeModeProvider>
   </StrictMode>,
 )
