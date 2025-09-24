@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../contexts/I18nProvider';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const InsightsContainer = styled.div`
@@ -281,6 +282,7 @@ interface AppRow {
 }
 
 export const Insights: FC = () => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -612,7 +614,7 @@ export const Insights: FC = () => {
 
   return (
     <InsightsContainer>
-      <Header>Insights</Header>
+      <Header>{t('nav.insights')}</Header>
 
       <FiltersBar>
         <FilterGroup>

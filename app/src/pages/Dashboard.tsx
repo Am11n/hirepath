@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -273,10 +273,10 @@ const KpiCard = styled.div`
   cursor: pointer;
   
   // Add subtle glow effect
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 15px ${props => props.theme.gradients.primaryGlow};
   
   &:hover {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 0 2px ${props => props.theme.colors.primary};
+    box-shadow: 0 0 20px ${props => props.theme.gradients.primaryGlow}, 0 0 0 2px ${props => props.theme.colors.primary};
   }
   
   /* Improve mobile responsiveness for small screens */
@@ -303,6 +303,7 @@ const KpiHeader = styled.div`
   width: 100%;
   min-height: 32px;
   position: relative;
+  color: ${props => props.theme.colors.primary};
   
   @media (min-width: 768px) {
     margin-bottom: 1rem;
@@ -770,7 +771,6 @@ const ActivityIconWrapper = styled.div<{ type: string }>`
   @media (min-width: 480px) {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
   }
 `;
 
@@ -856,34 +856,34 @@ const FilterButton = styled.button<{ active?: boolean }>`
 // SVG Icon Components
 const BriefcaseIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
 const CalendarIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M16 2V6" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M8 2V6" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M3 10H21" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M16 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M8 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M3 10H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
 const DocumentIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M14 2V8H20" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M16 13H8" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M16 17H8" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M10 9H9H8" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
 const ChartIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 3V19H21" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M7 15L10 10L13 13L17 7" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M3 3V19H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 15L10 10L13 13L17 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -972,11 +972,80 @@ const CustomLegend = (props: { payload?: Array<{ value: string; color: string }>
   );
 };
 
+// Simple modal styles for creating reminders
+const ModalBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+`;
+
+const ModalCard = styled.div`
+  background: ${p => p.theme.glass.card};
+  border: 1px solid ${p => p.theme.colors.borders};
+  border-radius: 12px;
+  padding: 1rem;
+  width: 90%;
+  max-width: 420px;
+`;
+
+const ModalTitle = styled.h3`
+  color: ${p => p.theme.colors.headings};
+  margin: 0 0 0.75rem 0;
+`;
+
+const ModalRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+`;
+
+const ModalInput = styled.input`
+  background: rgba(255,255,255,0.06);
+  color: ${p => p.theme.colors.headings};
+  border: 1px solid ${p => p.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.5rem;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+`;
+
+const ModalButton = styled.button`
+  background: ${p => p.theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+`;
+
+const ModalCancel = styled.button`
+  background: rgba(255,255,255,0.06);
+  color: ${p => p.theme.colors.headings};
+  border: 1px solid ${p => p.theme.colors.borders};
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+`;
+
 export const Dashboard: FC = () => {
   const navigate = useNavigate();
   // Read authenticated user to personalize greeting
   const { user } = useAuth();
   const [showNotification, setShowNotification] = useState(true);
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const [remTitle, setRemTitle] = useState('');
+  const [remWhen, setRemWhen] = useState(''); // datetime-local
+  const [savingReminder, setSavingReminder] = useState(false);
+  const titleRef = useRef<HTMLInputElement>(null);
   
   // Supabase-backed dashboard state
   const [kpiData, setKpiData] = useState({
@@ -1252,6 +1321,37 @@ export const Dashboard: FC = () => {
 
   // Search handler is not used in UI yet
 
+  const openAddReminder = () => {
+    setRemTitle('');
+    setRemWhen('');
+    setReminderOpen(true);
+    setTimeout(() => titleRef.current?.focus(), 0);
+  };
+
+  const saveReminder = async () => {
+    if (!user) return;
+    if (!remTitle) return;
+    setSavingReminder(true);
+    try {
+      const payload: Record<string, unknown> = {
+        title: remTitle,
+        type: 'reminder',
+        due_date: remWhen || null,
+        user_id: user.id,
+        completed: false,
+      };
+      const { error } = await supabase.from('activities').insert(payload);
+      if (error) throw error;
+      setReminderOpen(false);
+      // give backend a tick; dashboard will refresh on next load/realtime
+      await new Promise(r => setTimeout(r, 100));
+    } catch (err) {
+      // noop display for brevity; could add error toast
+    } finally {
+      setSavingReminder(false);
+    }
+  };
+
   return (
     <DashboardContainer>
       {/* Notification banner shown only if there is at least one upcoming interview or an offer today */}
@@ -1447,7 +1547,7 @@ export const Dashboard: FC = () => {
         <InsightsCard>
           <InsightsHeader>
             <InsightsTitle>Upcoming Reminders</InsightsTitle>
-            <AddButton>+ Add reminder</AddButton>
+            <AddButton onClick={openAddReminder}>+ Add reminder</AddButton>
           </InsightsHeader>
           <InsightsList>
             {upcomingReminders.map((reminder) => (
@@ -1511,6 +1611,25 @@ export const Dashboard: FC = () => {
           </FilterContainer>
         </InsightsCard>
       </InsightsRow>
+      {reminderOpen && (
+        <ModalBackdrop onClick={() => setReminderOpen(false)}>
+          <ModalCard onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>Add reminder</ModalTitle>
+            <ModalRow>
+              <label htmlFor="rem-title" style={{ color: 'inherit', fontSize: '0.9rem' }}>Title</label>
+              <ModalInput id="rem-title" ref={titleRef} value={remTitle} onChange={(e) => setRemTitle(e.target.value)} placeholder="Follow up with company" />
+            </ModalRow>
+            <ModalRow>
+              <label htmlFor="rem-when" style={{ color: 'inherit', fontSize: '0.9rem' }}>When</label>
+              <ModalInput id="rem-when" type="datetime-local" value={remWhen} onChange={(e) => setRemWhen(e.target.value)} />
+            </ModalRow>
+            <ModalActions>
+              <ModalCancel type="button" onClick={() => setReminderOpen(false)}>Cancel</ModalCancel>
+              <ModalButton type="button" onClick={saveReminder} disabled={savingReminder}>{savingReminder ? 'Saving…' : 'Save'}</ModalButton>
+            </ModalActions>
+          </ModalCard>
+        </ModalBackdrop>
+      )}
     </DashboardContainer>
   );
 };

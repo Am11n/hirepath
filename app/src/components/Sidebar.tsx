@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeMode } from '../contexts/themeMode';
+import { useI18n } from '../contexts/I18nProvider';
 
 const SidebarContainer = styled.div<{ $isOpen?: boolean; $collapsed?: boolean }>`
   width: ${props => props.$collapsed ? '70px' : '250px'};
@@ -75,48 +76,60 @@ const CollapsedLogo = styled.img`
   width: auto;
 `;
 
-const CollapseButton = styled.button<{ $collapsed?: boolean }>`
-  background: none;
-  border: none;
-  color: ${props => props.theme.colors.bodyText};
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  display: flex;
+// Small edge chevron that remains visible when sidebar is collapsed
+const EdgeToggle = styled.button<{ $visible?: boolean }>`
+  position: absolute;
+  right: -10px;
+  bottom: 16px;
+  width: 28px;
+  height: 42px;
+  display: ${props => props.$visible ? 'flex' : 'none'};
   align-items: center;
-  justify-content: flex-start;
-  width: 100%;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  border-top: 1px solid ${props => props.theme.colors.borders};
-  border-radius: 4px;
-  margin-top: 0.5rem;
-  
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: ${props => props.theme.colors.headings};
-  }
-  
-  &:focus {
-    outline: 2px solid ${props => props.theme.colors.primary};
-    outline-offset: -2px;
-  }
-  
-  svg {
-    margin-right: 0.75rem;
-    width: 20px;
-    height: 20px;
-  }
-  
-  span {
-    display: ${props => props.$collapsed ? 'none' : 'inline'};
-  }
-  
+  justify-content: center;
+  background: ${props => props.theme.glass.sidebar};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+  color: ${props => props.theme.colors.primary};
+  cursor: pointer;
+  z-index: 2000;
+  box-shadow: 4px 0 12px rgba(0,0,0,0.3);
+
+  &:hover { box-shadow: 6px 0 16px rgba(0,0,0,0.4); }
+
+  svg { width: 18px; height: 18px; }
+
   @media (max-width: 1024px) {
-    span {
-      display: inline;
-    }
+    display: none;
   }
 `;
+
+const FloatingToggle = styled.button<{ $visible?: boolean }>`
+  position: absolute;
+  right: 10px;
+  bottom: 16px;
+  width: 36px;
+  height: 36px;
+  display: ${props => props.$visible ? 'flex' : 'none'};
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.theme.glass.sidebar};
+  border: 1px solid ${props => props.theme.colors.borders};
+  border-radius: 9999px;
+  color: ${props => props.theme.colors.primary};
+  cursor: pointer;
+  z-index: 2000;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+
+  &:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
+
+  svg { width: 18px; height: 18px; }
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+`;
+
 
 const NavList = styled.ul`
   list-style: none;
@@ -169,16 +182,28 @@ const NavLink = styled.a<{ $active?: boolean; $collapsed?: boolean }>`
   }
 `;
 
-const BottomSection = styled.div<{ $collapsed?: boolean }>`
-  padding: 0 1.5rem;
-  border-top: 1px solid ${props => props.theme.colors.borders};
-  display: block;
+
+const BottomIconRow = styled.div`
+  padding: 0.25rem 0;
   margin-top: auto;
-  margin-bottom: 1rem;
+`;
+
+const ToggleIconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  color: ${props => props.theme.colors.bodyText};
+  cursor: pointer;
+  transition: color 0.2s ease;
   
-  @media (max-width: 1024px) {
-    display: block;
-  }
+  &:hover { color: ${props => props.theme.colors.headings}; }
+  &:focus { outline: 2px solid ${props => props.theme.colors.primary}; outline-offset: -2px; }
+  
+  svg { width: 20px; height: 20px; }
 `;
 
 // Simple SVG icons as placeholders
@@ -212,6 +237,12 @@ const InsightsIcon = () => (
   </svg>
 );
 
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
 
 const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16">
@@ -239,13 +270,15 @@ export const Sidebar: FC<SidebarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { mode } = useThemeMode();
+  const { t } = useI18n();
 
   const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-    { name: 'Applications', path: '/applications', icon: <ApplicationsIcon /> },
-    { name: 'Tasks', path: '/tasks', icon: <TasksIcon /> },
-    { name: 'Documents', path: '/documents', icon: <DocumentsIcon /> },
-    { name: 'Insights', path: '/insights', icon: <InsightsIcon /> },
+    { name: t('nav.dashboard'), path: '/dashboard', icon: <DashboardIcon /> },
+    { name: t('nav.applications'), path: '/applications', icon: <ApplicationsIcon /> },
+    { name: t('nav.tasks'), path: '/tasks', icon: <TasksIcon /> },
+    { name: t('nav.documents'), path: '/documents', icon: <DocumentsIcon /> },
+    { name: t('nav.insights'), path: '/insights', icon: <InsightsIcon /> },
+    { name: t('nav.calendar'), path: '/calendar', icon: <CalendarIcon /> },
   ];
 
   const handleCollapseToggle = () => {
@@ -273,6 +306,26 @@ export const Sidebar: FC<SidebarProps> = ({
           <CollapsedLogo src={encodeURI('/images/Logo uten navn-HirePath.svg')} alt="HirePath" />
         </CollapsedLogoWrapper>
       )}
+
+      {/* Persistent chevron outside the collapsed box */}
+      <EdgeToggle
+        $visible={false}
+        aria-label="Expand sidebar"
+        title="Expand sidebar"
+        onClick={() => { if (onCollapseToggle) onCollapseToggle(); }}
+      >
+        <CollapseIcon collapsed={true} />
+      </EdgeToggle>
+
+      {/* Floating chevron when expanded (to collapse) */}
+      <FloatingToggle
+        $visible={false}
+        aria-label="Collapse sidebar"
+        title="Collapse sidebar"
+        onClick={() => { if (onCollapseToggle) onCollapseToggle(); }}
+      >
+        <CollapseIcon collapsed={false} />
+      </FloatingToggle>
       
       <NavList>
         {menuItems.map((item) => (
@@ -294,21 +347,17 @@ export const Sidebar: FC<SidebarProps> = ({
         ))}
       </NavList>
       
-      <BottomSection>
-        <CollapseButton $collapsed={collapsed} onClick={handleCollapseToggle}>
-          {window.innerWidth <= 1024 ? (
-            <>
-              <CollapseIcon collapsed={true} />
-              <span>Collapse</span>
-            </>
-          ) : (
-            <>
-              <CollapseIcon collapsed={collapsed} />
-              <span>{collapsed ? 'Expand' : 'Collapse'}</span>
-            </>
-          )}
-        </CollapseButton>
-      </BottomSection>
+      <BottomIconRow>
+        <ToggleIconButton
+          aria-label={window.innerWidth <= 1024 ? 'Close sidebar' : (collapsed ? 'Expand sidebar' : 'Collapse sidebar')}
+          title={window.innerWidth <= 1024 ? 'Close sidebar' : (collapsed ? 'Expand sidebar' : 'Collapse sidebar')}
+          onClick={handleCollapseToggle}
+        >
+          <CollapseIcon collapsed={collapsed} />
+        </ToggleIconButton>
+      </BottomIconRow>
+      
+      {/* Removed bottom collapse box per request; replaced with icon toggles */}
     </SidebarContainer>
   );
 };

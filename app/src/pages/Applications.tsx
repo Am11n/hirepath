@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../contexts/I18nProvider';
 
 // Add a shared Status type
 type Status = 'Applied' | 'Interview' | 'Offer' | 'Rejected';
@@ -484,6 +485,22 @@ const Card = styled.div`
   margin-bottom: 0.5rem;
   cursor: grab;
   position: relative;
+  touch-action: none; /* prevent browser scroll/pinch during touch drag */
+`;
+
+const DragGhost = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: rgba(255,255,255,0.12);
+  border: 1px dashed ${p => p.theme.colors.borders};
+  color: ${p => p.theme.colors.headings};
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  z-index: 1000;
 `;
 
 const CardDeleteBtn = styled.button`
@@ -1028,6 +1045,58 @@ export const Applications: FC = () => {
 
   const allowDrop = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
+  // Touch DnD support (mobile/tablet)
+  const [touchDragAppId, setTouchDragAppId] = useState<string | null>(null);
+  const [touchGhost, setTouchGhost] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [touchDragTo, setTouchDragTo] = useState<'Applied' | 'Interview' | 'Offer' | 'Rejected' | null>(null);
+
+  const findStatusAtPoint = (x: number, y: number): 'Applied' | 'Interview' | 'Offer' | 'Rejected' | null => {
+    if (typeof document === 'undefined') return null;
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    if (!el) return null;
+    const col = el.closest('[data-status]') as HTMLElement | null;
+    const s = col?.getAttribute('data-status');
+    if (s === 'Applied' || s === 'Interview' || s === 'Offer' || s === 'Rejected') return s;
+    return null;
+  };
+
+  const handleTouchStartCard = (app: ApplicationRow) => {
+    setTouchDragAppId(app.id);
+    setTouchGhost({ x: 0, y: 0, text: app.position });
+    try {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } catch { /* ignore */ }
+  };
+
+  const handleTouchMoveCard = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!touchDragAppId) return;
+    const t = e.touches[0];
+    if (!t) return;
+    setTouchGhost(g => (g ? { ...g, x: t.clientX, y: t.clientY } : { x: t.clientX, y: t.clientY, text: '' }));
+    const s = findStatusAtPoint(t.clientX, t.clientY);
+    if (s) setTouchDragTo(s);
+    if (e.cancelable) e.preventDefault();
+  };
+
+  const handleTouchEndCard = async () => {
+    if (touchDragAppId && touchDragTo && user) {
+      await supabase
+        .from('job_applications')
+        .update({ status: touchDragTo })
+        .eq('id', touchDragAppId)
+        .eq('user_id', user.id);
+      await refresh();
+    }
+    setTouchDragAppId(null);
+    setTouchDragTo(null);
+    setTouchGhost(null);
+    try {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    } catch { /* ignore */ }
+  };
+
   // inline status update
   // superseded by enhanced status pill handler later in file
   // (duplicate removed to avoid redeclaration)
@@ -1043,8 +1112,8 @@ export const Applications: FC = () => {
         actionOpenIdRef.current = null;
       }
     };
-    document.addEventListener('click', onDocClick);
-    return () => document.removeEventListener('click', onDocClick);
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
   const toggleActionMenu = (e: React.MouseEvent, id: string) => {
@@ -1155,10 +1224,26 @@ export const Applications: FC = () => {
     await refresh();
   };
 
+  // Realtime sync with Calendar/Tasks updates
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase.channel('apps-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'job_applications', filter: `user_id=eq.${user.id}` }, () => {
+        refresh();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activities', filter: `user_id=eq.${user.id}` }, () => {
+        refresh();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, refresh]);
+
+  const { t } = useI18n();
+
   return (
     <ApplicationsContainer>
       <TopBar>
-        <Header>Applications</Header>
+        <Header>{t('nav.applications')}</Header>
         <ViewToggle>
           <ToggleButton $active={view==='list'} onClick={() => setView('list')}>List</ToggleButton>
           <ToggleButton $active={view==='kanban'} onClick={() => setView('kanban')}>Kanban</ToggleButton>
@@ -1356,7 +1441,7 @@ export const Applications: FC = () => {
           </FiltersContainer>
 
           <Kanban>
-            <Column $variant="applied" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Applied')}>
+            <Column $variant="applied" data-status="Applied" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Applied')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <ColumnHeader>Applied ({byStatus('Applied').length})</ColumnHeader>
                 <ColumnHeaderRight>
@@ -1364,7 +1449,16 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Applied').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
+                <Card
+                  key={app.id}
+                  draggable
+                  onDragStart={(e) => handleCardDragStart(e, app.id)}
+                  onTouchStart={() => handleTouchStartCard(app)}
+                  onTouchMove={handleTouchMoveCard}
+                  onTouchEnd={handleTouchEndCard}
+                  onClick={() => openPreview(app)}
+                  style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
+                >
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1378,7 +1472,7 @@ export const Applications: FC = () => {
                 </Card>
               ))}
             </Column>
-            <Column $variant="interview" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Interview')}>
+            <Column $variant="interview" data-status="Interview" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Interview')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <ColumnHeader>Interview ({byStatus('Interview').length})</ColumnHeader>
                 <ColumnHeaderRight>
@@ -1386,7 +1480,16 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Interview').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
+                <Card
+                  key={app.id}
+                  draggable
+                  onDragStart={(e) => handleCardDragStart(e, app.id)}
+                  onTouchStart={() => handleTouchStartCard(app)}
+                  onTouchMove={handleTouchMoveCard}
+                  onTouchEnd={handleTouchEndCard}
+                  onClick={() => openPreview(app)}
+                  style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
+                >
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1400,7 +1503,7 @@ export const Applications: FC = () => {
                 </Card>
               ))}
             </Column>
-            <Column $variant="offer" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Offer')}>
+            <Column $variant="offer" data-status="Offer" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Offer')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <ColumnHeader>Offer ({byStatus('Offer').length})</ColumnHeader>
                 <ColumnHeaderRight>
@@ -1408,7 +1511,16 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Offer').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
+                <Card
+                  key={app.id}
+                  draggable
+                  onDragStart={(e) => handleCardDragStart(e, app.id)}
+                  onTouchStart={() => handleTouchStartCard(app)}
+                  onTouchMove={handleTouchMoveCard}
+                  onTouchEnd={handleTouchEndCard}
+                  onClick={() => openPreview(app)}
+                  style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
+                >
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1422,7 +1534,7 @@ export const Applications: FC = () => {
                 </Card>
               ))}
             </Column>
-            <Column $variant="rejected" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Rejected')}>
+            <Column $variant="rejected" data-status="Rejected" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Rejected')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <ColumnHeader>Rejected ({byStatus('Rejected').length})</ColumnHeader>
                 <ColumnHeaderRight>
@@ -1430,7 +1542,16 @@ export const Applications: FC = () => {
                 </ColumnHeaderRight>
               </div>
               {byStatus('Rejected').map(app => (
-                <Card key={app.id} draggable onDragStart={(e) => handleCardDragStart(e, app.id)} onClick={() => openPreview(app)} style={{ cursor:'pointer' }}>
+                <Card
+                  key={app.id}
+                  draggable
+                  onDragStart={(e) => handleCardDragStart(e, app.id)}
+                  onTouchStart={() => handleTouchStartCard(app)}
+                  onTouchMove={handleTouchMoveCard}
+                  onTouchEnd={handleTouchEndCard}
+                  onClick={() => openPreview(app)}
+                  style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
+                >
                   <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
                     🗑
                   </CardDeleteBtn>
@@ -1445,6 +1566,11 @@ export const Applications: FC = () => {
               ))}
             </Column>
           </Kanban>
+          {!!touchGhost && (
+            <DragGhost style={{ transform: `translate(${touchGhost.x}px, ${touchGhost.y}px)` }}>
+              {touchGhost.text}
+            </DragGhost>
+          )}
         </>
       )}
 

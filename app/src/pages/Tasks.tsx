@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../contexts/I18nProvider';
 
 const TasksContainer = styled.div`
   width: 100%;
@@ -479,12 +480,29 @@ const TaskColumnHeader = styled.h3`
 `;
 
 const TaskCard = styled.div`
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid ${props => props.theme.colors.borders};
   border-radius: 10px;
   padding: 0.6rem;
   margin-bottom: 0.5rem;
   cursor: grab;
+  position: relative;
+  touch-action: none; /* prevent page scroll while touch-dragging */
+`;
+
+const DragGhost = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: rgba(255,255,255,0.12);
+  border: 1px dashed ${p => p.theme.colors.borders};
+  color: ${p => p.theme.colors.headings};
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  z-index: 1000;
 `;
 
 const AddMini = styled.button`
@@ -556,6 +574,7 @@ type ActivityRow = {
 export const Tasks: FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [rows, setRows] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -856,10 +875,68 @@ export const Tasks: FC = () => {
     if (!error) await refresh();
   };
  
+  // Touch DnD support
+  const [touchTaskId, setTouchTaskId] = useState<string | null>(null);
+  const [touchTaskTo, setTouchTaskTo] = useState<'todo' | 'in_progress' | 'done' | null>(null);
+  const [touchGhost, setTouchGhost] = useState<{ x: number; y: number; text: string } | null>(null);
+
+  const findTaskStatusAtPoint = (x: number, y: number): 'todo' | 'in_progress' | 'done' | null => {
+    if (typeof document === 'undefined') return null;
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    if (!el) return null;
+    const col = el.closest('[data-task-status]') as HTMLElement | null;
+    const s = col?.getAttribute('data-task-status');
+    if (s === 'todo' || s === 'in_progress' || s === 'done') return s;
+    return null;
+  };
+
+  const handleTaskTouchStart = (id: string, text: string) => {
+    setTouchTaskId(id);
+    setTouchGhost({ x: 0, y: 0, text });
+    try {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } catch { /* ignore */ }
+  };
+  const handleTaskTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!touchTaskId) return;
+    const t = e.touches[0];
+    if (!t) return;
+    setTouchGhost(g => (g ? { ...g, x: t.clientX, y: t.clientY } : { x: t.clientX, y: t.clientY, text: '' }));
+    const s = findTaskStatusAtPoint(t.clientX, t.clientY);
+    if (s) setTouchTaskTo(s);
+    if (e.cancelable) e.preventDefault();
+  };
+  const handleTaskTouchEnd = async () => {
+    if (touchTaskId && touchTaskTo && user) {
+      const payload: Record<string, unknown> = { completed: touchTaskTo === 'done' };
+      if (hasStatusCol) payload.status = touchTaskTo;
+      const { error } = await supabase.from('activities').update(payload).eq('id', touchTaskId).eq('user_id', user.id);
+      if (!error) await refresh();
+    }
+    setTouchTaskId(null);
+    setTouchTaskTo(null);
+    setTouchGhost(null);
+    try {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    } catch { /* ignore */ }
+  };
+
+  // Realtime sync with Applications/Calendar updates
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase.channel('tasks-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activities', filter: `user_id=eq.${user.id}` }, () => refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'job_applications', filter: `user_id=eq.${user.id}` }, () => refresh())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, refresh]);
+
   return (
     <TasksContainer>
       <TopBar>
-        <Header>Tasks</Header>
+        <Header>{t('nav.tasks')}</Header>
         <div style={{ display:'flex', gap: '0.5rem', alignItems:'center' }}>
           <ViewToggle>
             <ToggleButton $active={view==='list'} onClick={() => setView('list')}>List</ToggleButton>
@@ -915,13 +992,23 @@ export const Tasks: FC = () => {
 
       {view === 'kanban' && (
         <TaskKanban>
-          <TaskColumn $variant="todo" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'todo')}>
+          <TaskColumn $variant="todo" data-task-status="todo" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'todo')}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <TaskColumnHeader>To Do ({tasksBy('todo').length})</TaskColumnHeader>
               <AddMini type="button" onClick={() => openCreateInStatus('todo')}>+ Add task</AddMini>
             </div>
             {tasksBy('todo').map(t => (
-              <TaskCard key={t.id} draggable onDragStart={(e) => handleTaskDragStart(e, t.id)} title={deadlineStatusLabel(t.due_date)} onClick={() => openPreview(t)} style={{ cursor: 'pointer' }}>
+              <TaskCard
+                key={t.id}
+                draggable
+                onDragStart={(e) => handleTaskDragStart(e, t.id)}
+                onTouchStart={() => handleTaskTouchStart(t.id, t.title)}
+                onTouchMove={handleTaskTouchMove}
+                onTouchEnd={handleTaskTouchEnd}
+                title={deadlineStatusLabel(t.due_date)}
+                onClick={() => openPreview(t)}
+                style={{ cursor: 'pointer', opacity: touchTaskId === t.id ? 0.4 : 1 }}
+              >
                 <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(t.due_date)}`, paddingTop: '4px' }}>{t.title}</div>
                 {t.job_application_id ? (() => {
                   const a = appById.get(t.job_application_id!);
@@ -946,13 +1033,23 @@ export const Tasks: FC = () => {
             ))}
           </TaskColumn>
 
-          <TaskColumn $variant="in_progress" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'in_progress')}>
+          <TaskColumn $variant="in_progress" data-task-status="in_progress" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'in_progress')}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <TaskColumnHeader>In Progress ({tasksBy('in_progress').length})</TaskColumnHeader>
               <AddMini type="button" onClick={() => openCreateInStatus('in_progress')}>+ Add task</AddMini>
             </div>
             {tasksBy('in_progress').map(t => (
-              <TaskCard key={t.id} draggable onDragStart={(e) => handleTaskDragStart(e, t.id)} title={deadlineStatusLabel(t.due_date)} onClick={() => openPreview(t)} style={{ cursor: 'pointer' }}>
+              <TaskCard
+                key={t.id}
+                draggable
+                onDragStart={(e) => handleTaskDragStart(e, t.id)}
+                onTouchStart={() => handleTaskTouchStart(t.id, t.title)}
+                onTouchMove={handleTaskTouchMove}
+                onTouchEnd={handleTaskTouchEnd}
+                title={deadlineStatusLabel(t.due_date)}
+                onClick={() => openPreview(t)}
+                style={{ cursor: 'pointer', opacity: touchTaskId === t.id ? 0.4 : 1 }}
+              >
                 <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(t.due_date)}`, paddingTop: '4px' }}>{t.title}</div>
                 {t.job_application_id ? (() => {
                   const a = appById.get(t.job_application_id!);
@@ -977,13 +1074,22 @@ export const Tasks: FC = () => {
             ))}
           </TaskColumn>
 
-          <TaskColumn $variant="done" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'done')}>
+          <TaskColumn $variant="done" data-task-status="done" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'done')}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <TaskColumnHeader>Done ({tasksBy('done').length})</TaskColumnHeader>
               <AddMini type="button" onClick={() => openCreateInStatus('done')}>+ Add task</AddMini>
             </div>
             {tasksBy('done').map(t => (
-              <TaskCard key={t.id} draggable onDragStart={(e) => handleTaskDragStart(e, t.id)} onClick={() => openPreview(t)} style={{ cursor: 'pointer' }}>
+              <TaskCard
+                key={t.id}
+                draggable
+                onDragStart={(e) => handleTaskDragStart(e, t.id)}
+                onTouchStart={() => handleTaskTouchStart(t.id, t.title)}
+                onTouchMove={handleTaskTouchMove}
+                onTouchEnd={handleTaskTouchEnd}
+                onClick={() => openPreview(t)}
+                style={{ cursor: 'pointer', opacity: touchTaskId === t.id ? 0.4 : 1 }}
+              >
                 <div style={{ fontWeight: 700 }}>{t.title}</div>
                 {t.job_application_id ? (() => {
                   const a = appById.get(t.job_application_id!);
@@ -1187,6 +1293,11 @@ export const Tasks: FC = () => {
             </div>
           </ModalCard>
         </ModalBackdrop>
+      )}
+      {!!touchGhost && (
+        <DragGhost style={{ transform: `translate(${touchGhost.x}px, ${touchGhost.y}px)` }}>
+          {touchGhost.text}
+        </DragGhost>
       )}
     </TasksContainer>
   );

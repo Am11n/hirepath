@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import styled from 'styled-components';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../contexts/I18nProvider';
 // import { useNavigate } from 'react-router-dom';
 
 const DocumentsContainer = styled.div`
@@ -602,6 +603,7 @@ type DocumentView = DocumentRow & { signed_url?: string };
 
 export const Documents: FC = () => {
   const { user } = useAuth();
+  const { t } = useI18n();
   // const navigate = useNavigate(); // re-enable when navigation from modal is implemented
   const [rows, setRows] = useState<DocumentView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -762,7 +764,7 @@ export const Documents: FC = () => {
 
   return (
     <DocumentsContainer>
-      <Header>Documents</Header>
+      <Header>{t('nav.documents')}</Header>
       <UploadArea>
         <UploadIcon>📁</UploadIcon>
         <UploadTitle>Drag & drop files here</UploadTitle>
