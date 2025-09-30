@@ -355,7 +355,7 @@ const AvatarMenuItem = styled.button`
 
 export const Profile: FC = () => {
   const { mode, setMode, fontScale, setFontScale, accent, setAccent } = useThemeMode();
-  const { setLang } = useI18n();
+  const { setLang, t } = useI18n();
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -434,7 +434,7 @@ export const Profile: FC = () => {
       setLang(language === 'Norwegian' ? 'nb' : 'en');
       setSaveOk(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Could not save';
+      const message = err instanceof Error ? err.message : t('profile.saveFailed');
       setSaveError(message);
     } finally {
       setSaving(false);
@@ -448,7 +448,7 @@ export const Profile: FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setAvatarError('Please select an image file');
+      setAvatarError(t('profile.selectImageFile'));
       return;
     }
     setAvatarError(null);
@@ -474,7 +474,7 @@ export const Profile: FC = () => {
       if (metaErr) throw metaErr;
       setAvatarMenuOpen(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Upload failed';
+      const message = err instanceof Error ? err.message : t('profile.uploadFailed');
       setAvatarError(message);
     } finally {
       setAvatarSaving(false);
@@ -494,20 +494,20 @@ export const Profile: FC = () => {
       setAvatarUrl(null);
       setAvatarMenuOpen(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to remove avatar';
+      const message = err instanceof Error ? err.message : t('profile.removeAvatarFailed');
       setAvatarError(message);
     }
   };
 
   return (
     <ProfileContainer>
-      <Header>Settings</Header>
+      <Header>{t('profile.title')}</Header>
       <SectionsGrid>
       <Section>
-        <SectionHeader>Profile Settings</SectionHeader>
+        <SectionHeader>{t('profile.sections.profile')}</SectionHeader>
         <Form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
           <FormGroup>
-            <Label>Profile Picture</Label>
+            <Label>{t('profile.picture')}</Label>
             <AvatarRow>
               <AvatarWrap ref={avatarWrapRef}>
                 <AvatarCircle onClick={() => setAvatarMenuOpen(v => !v)} style={{ cursor:'pointer' }}>
@@ -519,40 +519,40 @@ export const Profile: FC = () => {
                 </AvatarCircle>
                 {avatarMenuOpen && (
                   <AvatarMenu onClick={(e)=>e.stopPropagation()}>
-                    <AvatarMenuItem type="button" onClick={handleChooseAvatar} disabled={avatarSaving}>Choose Image…</AvatarMenuItem>
+                    <AvatarMenuItem type='button' onClick={handleChooseAvatar} disabled={avatarSaving}>{t('profile.chooseImage')}</AvatarMenuItem>
                     {avatarUrl && (
-                      <AvatarMenuItem type="button" onClick={handleRemoveAvatar} disabled={avatarSaving}>Remove Image</AvatarMenuItem>
+                      <AvatarMenuItem type='button' onClick={handleRemoveAvatar} disabled={avatarSaving}>{t('profile.removeImage')}</AvatarMenuItem>
                     )}
                   </AvatarMenu>
                 )}
               </AvatarWrap>
               <input ref={fileInputRef} id="avatar" type="file" accept="image/*" onChange={handleAvatarSelected} style={{ display: 'none' }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <UploadInfo>Click the avatar to change or remove</UploadInfo>
-                {avatarSaving && <UploadInfo>Uploading…</UploadInfo>}
+                <UploadInfo>{t('profile.avatarInstructions')}</UploadInfo>
+                {avatarSaving && <UploadInfo>{t('profile.uploading')}</UploadInfo>}
                 {avatarError && <span style={{ color: '#f87171' }}>{avatarError}</span>}
               </div>
             </AvatarRow>
           </FormGroup>
           <TwoCol>
             <FormGroup>
-              <Label htmlFor="first-name">First Name</Label>
-              <Input id="first-name" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              <Label htmlFor='first-name'>{t('profile.firstName')}</Label>
+              <Input id='first-name' placeholder={t('profile.firstName')} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </FormGroup>
             <FormGroup>
-              <Label htmlFor="last-name">Last Name</Label>
-              <Input id="last-name" placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              <Label htmlFor='last-name'>{t('profile.lastName')}</Label>
+              <Input id='last-name' placeholder={t('profile.lastName')} value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </FormGroup>
           </TwoCol>
           <PasswordRow>
             <PasswordItem>
               <FormGroup>
-                <Label htmlFor="old-password">Old Password</Label>
+                <Label htmlFor='old-password'>{t('profile.oldPassword')}</Label>
                 <Input
                   type="password"
                   id="old-password"
                   name="old-password"
-                  placeholder="Enter old password"
+                  placeholder={t('profile.enterOldPassword')}
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="none"
@@ -564,12 +564,12 @@ export const Profile: FC = () => {
             </PasswordItem>
             <PasswordItem>
               <FormGroup>
-                <Label htmlFor="new-password">New Password</Label>
+                <Label htmlFor='new-password'>{t('profile.newPassword')}</Label>
                 <Input
                   type="password"
                   id="new-password"
                   name="new-password"
-                  placeholder="Enter new password"
+                  placeholder={t('profile.enterNewPassword')}
                   autoComplete="new-password"
                   value={newPassword}
                   onChange={(e)=>setNewPassword(e.target.value)}
@@ -578,12 +578,12 @@ export const Profile: FC = () => {
             </PasswordItem>
             <PasswordItem>
               <FormGroup>
-                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Label htmlFor='confirm-password'>{t('profile.confirmPassword')}</Label>
                 <Input
                   type="password"
                   id="confirm-password"
                   name="confirm-password"
-                  placeholder="Confirm new password"
+                  placeholder={t('profile.confirmNewPassword')}
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e)=>setConfirmPassword(e.target.value)}
@@ -592,47 +592,47 @@ export const Profile: FC = () => {
             </PasswordItem>
           </PasswordRow>
           <FormGroup>
-            <Label htmlFor="language">Language</Label>
+            <Label htmlFor='language'>{t('profile.language')}</Label>
             <Select id="language" value={language} onChange={(e) => { const v = e.target.value; setLanguage(v); setLang(v === 'Norwegian' ? 'nb' : 'en'); }}>
               <option>English</option>
               <option>Norwegian</option>
             </Select>
           </FormGroup>
-          <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Profile'}</Button>
-          {saveOk && <span style={{ color: '#10b981' }}>Saved</span>}
-          {saveError && <span style={{ color: '#f87171' }}>Error: {saveError}</span>}
+          <Button type='submit' disabled={saving}>{saving ? t('profile.saving') : t('profile.saveProfile')}</Button>
+          {saveOk && <span style={{ color: '#10b981' }}>{t('profile.saved')}</span>}
+          {saveError && <span style={{ color: '#f87171' }}>{t('common.error')}: {saveError}</span>}
         </Form>
       </Section>
        
       <Section>
-        <SectionHeader>Notifications</SectionHeader>
+        <SectionHeader>{t('profile.sections.notifications')}</SectionHeader>
         <Form>
           <FormGroup>
-            <Label><Input type="checkbox" /> Email Notifications</Label>
+            <Label><Input type='checkbox' /> {t('profile.emailNotifications')}</Label>
           </FormGroup>
           <FormGroup>
-            <Label><Input type="checkbox" /> Push/Browser Notifications</Label>
+            <Label><Input type='checkbox' /> {t('profile.pushNotifications')}</Label>
           </FormGroup>
           <FormGroup>
-            <Label><Input type="checkbox" /> Weekly Job Summary Emails</Label>
+            <Label><Input type='checkbox' /> {t('profile.weeklySummary')}</Label>
           </FormGroup>
           <FormGroup>
-            <Label>Delivery Preference</Label>
+            <Label>{t('profile.deliveryPreference')}</Label>
             <Inline>
-              <label><Input type="radio" name="notifPref" defaultChecked /> Only important</label>
-              <label><Input type="radio" name="notifPref" /> All updates</label>
+              <label><Input type='radio' name='notifPref' defaultChecked /> {t('profile.onlyImportant')}</label>
+              <label><Input type='radio' name='notifPref' /> {t('profile.allUpdates')}</label>
             </Inline>
           </FormGroup>
-          <Button type="button">Save Notification Settings</Button>
+          <Button type='button'>{t('profile.saveNotifications')}</Button>
         </Form>
       </Section>
       
       <Section>
-        <SectionHeader>Application Preferences</SectionHeader>
+        <SectionHeader>{t('profile.sections.preferences')}</SectionHeader>
         <Form>
           <TwoCol>
             <FormGroup>
-              <Label htmlFor="default-view">Default view</Label>
+              <Label htmlFor='default-view'>{t('profile.defaultView')}</Label>
               <Select id="default-view">
                 <option>Kanban</option>
                 <option>List</option>
@@ -640,7 +640,7 @@ export const Profile: FC = () => {
               </Select>
             </FormGroup>
             <FormGroup>
-              <Label htmlFor="reminder-time">Default reminder time</Label>
+              <Label htmlFor='reminder-time'>{t('profile.reminderTime')}</Label>
               <Select id="reminder-time">
                 <option>24 hours before</option>
                 <option>12 hours before</option>
@@ -650,7 +650,7 @@ export const Profile: FC = () => {
           </TwoCol>
           <TwoCol>
             <FormGroup>
-              <Label htmlFor="timezone">Timezone</Label>
+              <Label htmlFor='timezone'>{t('profile.timezone')}</Label>
               <Select id="timezone">
                 <option>UTC</option>
                 <option>Europe/Oslo</option>
@@ -658,45 +658,45 @@ export const Profile: FC = () => {
               </Select>
             </FormGroup>
             <FormGroup>
-              <Label htmlFor="working-hours">Working hours</Label>
+              <Label htmlFor='working-hours'>{t('profile.workingHours')}</Label>
               <Input id="working-hours" placeholder="09:00 - 17:00" />
             </FormGroup>
           </TwoCol>
-          <Button type="button">Save Preferences</Button>
+          <Button type='button'>{t('profile.savePreferences')}</Button>
         </Form>
       </Section>
       
       <Section>
-        <SectionHeader>Integrations</SectionHeader>
+        <SectionHeader>{t('profile.sections.integrations')}</SectionHeader>
         <Inline>
-          <SecondaryButton type="button">Connect LinkedIn</SecondaryButton>
-          <SecondaryButton type="button">Connect Google Drive</SecondaryButton>
-          <SecondaryButton type="button">Connect Dropbox</SecondaryButton>
-          <SecondaryButton type="button">Export CSV</SecondaryButton>
-          <SecondaryButton type="button">Export PDF</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.connectLinkedIn')}</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.connectGoogleDrive')}</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.connectDropbox')}</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.exportCSV')}</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.exportPDF')}</SecondaryButton>
         </Inline>
       </Section>
       
       <Section>
-        <SectionHeader>Theme & Appearance</SectionHeader>
+        <SectionHeader>{t('profile.sections.theme')}</SectionHeader>
         <Form>
           <FormGroup>
-            <Label>Mode</Label>
+            <Label>{t('profile.mode')}</Label>
             <Inline>
-              <label><Input type="radio" name="mode" checked={mode === 'light'} onChange={() => setMode('light')} /> Light</label>
-              <label><Input type="radio" name="mode" checked={mode === 'dark'} onChange={() => setMode('dark')} /> Dark</label>
+              <label><Input type='radio' name='mode' checked={mode === 'light'} onChange={() => setMode('light')} /> {t('profile.light')}</label>
+              <label><Input type='radio' name='mode' checked={mode === 'dark'} onChange={() => setMode('dark')} /> {t('profile.dark')}</label>
             </Inline>
           </FormGroup>
           <FormGroup>
-            <Label>Accent color</Label>
+            <Label>{t('profile.accentColor')}</Label>
             <Inline>
-              <label><Input type="radio" name="accent" checked={accent === 'blue'} onChange={() => setAccent('blue')} /> Blue</label>
-              <label><Input type="radio" name="accent" checked={accent === 'purple'} onChange={() => setAccent('purple')} /> Purple</label>
-              <label><Input type="radio" name="accent" checked={accent === 'green'} onChange={() => setAccent('green')} /> Green</label>
+              <label><Input type='radio' name='accent' checked={accent === 'blue'} onChange={() => setAccent('blue')} /> {t('profile.blue')}</label>
+              <label><Input type='radio' name='accent' checked={accent === 'purple'} onChange={() => setAccent('purple')} /> {t('profile.purple')}</label>
+              <label><Input type='radio' name='accent' checked={accent === 'green'} onChange={() => setAccent('green')} /> {t('profile.green')}</label>
             </Inline>
           </FormGroup>
           <FormGroup>
-            <Label htmlFor="font-size">Font size</Label>
+            <Label htmlFor='font-size'>{t('profile.fontSize')}</Label>
             <Select id="font-size" value={fontScale === 'normal' ? 'Normal' : fontScale === 'large' ? 'Large' : 'Extra Large'} onChange={(e) => {
               const val = e.target.value;
               if (val === 'Normal') setFontScale('normal');
@@ -712,50 +712,50 @@ export const Profile: FC = () => {
       </Section>
       
       <Section>
-        <SectionHeader>Privacy & Security</SectionHeader>
+        <SectionHeader>{t('profile.sections.privacy')}</SectionHeader>
         <Form>
           <FormGroup>
-            <Label><Input type="checkbox" /> Enable Two‑Factor Authentication (2FA)</Label>
+            <Label><Input type='checkbox' /> {t('profile.enable2FA')}</Label>
           </FormGroup>
           <FormGroup>
-            <Label>Active sessions</Label>
-            <DescriptionText>Mac • Chrome • Oslo · Active now</DescriptionText>
-            <DescriptionText>iPhone • Safari • Last active 2d ago</DescriptionText>
-            <SecondaryButton type="button">Sign out of all other sessions</SecondaryButton>
+            <Label>{t('profile.activeSessions')}</Label>
+            <DescriptionText>{t('profile.session1')}</DescriptionText>
+            <DescriptionText>{t('profile.session2')}</DescriptionText>
+            <SecondaryButton type='button'>{t('profile.signOutSessions')}</SecondaryButton>
           </FormGroup>
         </Form>
       </Section>
       
       <Section>
-        <SectionHeader>Subscription / Account Plan</SectionHeader>
-        <DescriptionText>Current plan: Free • 12 applications tracked • 4 documents uploaded</DescriptionText>
+        <SectionHeader>{t('profile.sections.subscription')}</SectionHeader>
+        <DescriptionText>{t('profile.currentPlan')}</DescriptionText>
         <Inline>
-          <SecondaryButton type="button">Upgrade</SecondaryButton>
-          <SecondaryButton type="button">Manage Billing</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.upgrade')}</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.manageBilling')}</SecondaryButton>
         </Inline>
       </Section>
       
       <Section>
-        <SectionHeader>Support</SectionHeader>
+        <SectionHeader>{t('profile.sections.support')}</SectionHeader>
         <Inline>
-          <SecondaryButton as="a" href="/help" style={{ textDecoration: 'none' }}>Help Center</SecondaryButton>
-          <SecondaryButton type="button">Contact Support</SecondaryButton>
+          <SecondaryButton as='a' href='/help' style={{ textDecoration: 'none' }}>{t('profile.helpCenter')}</SecondaryButton>
+          <SecondaryButton type='button'>{t('profile.contactSupport')}</SecondaryButton>
         </Inline>
         <Form style={{ marginTop: '0.75rem' }}>
           <FormGroup>
-            <Label htmlFor="feedback">Feedback</Label>
-            <Textarea id="feedback" placeholder="What can we improve?" />
+            <Label htmlFor='feedback'>{t('profile.feedback')}</Label>
+            <Textarea id='feedback' placeholder={t('profile.feedbackPlaceholder')} />
           </FormGroup>
-          <Button type="button">Send Feedback</Button>
+          <Button type='button'>{t('profile.sendFeedback')}</Button>
         </Form>
       </Section>
       
       <Section>
-        <SectionHeader>Danger Zone</SectionHeader>
+        <SectionHeader>{t('profile.sections.danger')}</SectionHeader>
         <DescriptionText>
-          Permanently delete your account and all associated data. This action cannot be undone.
+          {t('profile.deleteWarning')}
         </DescriptionText>
-        <DangerButton>Delete Account</DangerButton>
+        <DangerButton>{t('profile.deleteAccount')}</DangerButton>
       </Section>
       </SectionsGrid>
     </ProfileContainer>

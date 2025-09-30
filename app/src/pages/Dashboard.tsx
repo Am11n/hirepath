@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useI18n } from '../contexts/I18nProvider';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, ReferenceLine, Label
@@ -1038,6 +1039,7 @@ const ModalCancel = styled.button`
 
 export const Dashboard: FC = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   // Read authenticated user to personalize greeting
   const { user } = useAuth();
   const [showNotification, setShowNotification] = useState(true);
@@ -1290,12 +1292,12 @@ export const Dashboard: FC = () => {
     const today = new Date();
     const dayOfWeek = today.getDay();
     if (nextInterviewDate) {
-      return 'You have an upcoming interview.';
+      return t('dashboard.welcome.interviewUpcoming');
     }
     switch (dayOfWeek) {
-      case 1: return 'Plan your week ahead.';
-      case 5: return '3 reminders before the weekend.';
-      default: return "Here's your job search overview.";
+      case 1: return t('dashboard.welcome.planWeek');
+      case 5: return t('dashboard.welcome.weekendReminders');
+      default: return t('dashboard.welcome.overview');
     }
   };
 
@@ -1360,7 +1362,7 @@ export const Dashboard: FC = () => {
           <NotificationContent>
             <NotificationIcon>🔔</NotificationIcon>
             <NotificationText>
-              {hasOfferToday ? 'You received a job offer!' : 'You have upcoming interviews'}
+              {hasOfferToday ? t('dashboard.notification.offerReceived') : t('dashboard.notification.interviewsUpcoming')}
             </NotificationText>
           </NotificationContent>
           <NotificationClose onClick={() => setShowNotification(false)}>×</NotificationClose>
@@ -1370,15 +1372,15 @@ export const Dashboard: FC = () => {
       <WelcomeCard>
         <WelcomeHeader>
           <div>
-            <WelcomeTitle>Welcome, {getDisplayName()} 👋</WelcomeTitle>
+            <WelcomeTitle>{t('dashboard.welcome.title').replace('{name}', getDisplayName())}</WelcomeTitle>
             <WelcomeSubtitle>{getWelcomeMessage()}</WelcomeSubtitle>
           </div>
           <div>
             {nextInterviewDate && (
               <>
-                <NextInterviewPill>Next interview: {new Date(nextInterviewDate).toLocaleDateString()}</NextInterviewPill>
+                <NextInterviewPill>{t('dashboard.nextInterview').replace('{date}', new Date(nextInterviewDate).toLocaleDateString())}</NextInterviewPill>
                 <InterviewDetailsLink href="#" onClick={(e) => { e.preventDefault(); alert('Opening interview details in calendar...'); }}>
-                  View details →
+                  {t('dashboard.viewDetails')}
                 </InterviewDetailsLink>
               </>
             )}
@@ -1392,7 +1394,7 @@ export const Dashboard: FC = () => {
             <BriefcaseIcon />
           </KpiHeader>
           <KpiValue>{kpiData.applicationsSubmitted.value}</KpiValue>
-          <KpiLabel>Applications Submitted</KpiLabel>
+          <KpiLabel>{t('dashboard.kpi.applications')}</KpiLabel>
           <KpiChange positive={kpiData.applicationsSubmitted.changePositive}>
             {kpiData.applicationsSubmitted.change}
             <TrendIcon>{kpiData.applicationsSubmitted.changePositive ? '↗' : '↘'}</TrendIcon>
@@ -1404,7 +1406,7 @@ export const Dashboard: FC = () => {
             <CalendarIcon />
           </KpiHeader>
           <KpiValue>{kpiData.interviewsScheduled.value}</KpiValue>
-          <KpiLabel>Interviews Scheduled</KpiLabel>
+          <KpiLabel>{t('dashboard.kpi.interviews')}</KpiLabel>
           <KpiChange positive={kpiData.interviewsScheduled.changePositive}>
             {kpiData.interviewsScheduled.change}
             <TrendIcon>{kpiData.interviewsScheduled.changePositive ? '↗' : '↘'}</TrendIcon>
@@ -1416,7 +1418,7 @@ export const Dashboard: FC = () => {
             <DocumentIcon />
           </KpiHeader>
           <KpiValue>{kpiData.documentsUploaded.value}</KpiValue>
-          <KpiLabel>Documents Uploaded</KpiLabel>
+          <KpiLabel>{t('dashboard.kpi.documents')}</KpiLabel>
           <KpiChange positive={kpiData.documentsUploaded.changePositive}>
             {kpiData.documentsUploaded.change}
             <TrendIcon>{kpiData.documentsUploaded.changePositive ? '↗' : '↘'}</TrendIcon>
@@ -1428,7 +1430,7 @@ export const Dashboard: FC = () => {
             <ChartIcon />
           </KpiHeader>
           <KpiValue>{kpiData.successRate.value}%</KpiValue>
-          <KpiLabel>Success Rate</KpiLabel>
+          <KpiLabel>{t('dashboard.kpi.success')}</KpiLabel>
           <KpiChange positive={kpiData.successRate.changePositive}>
             {kpiData.successRate.change}
             <TrendIcon>{kpiData.successRate.changePositive ? '↗' : '↘'}</TrendIcon>
@@ -1438,7 +1440,7 @@ export const Dashboard: FC = () => {
 
       <ChartsRow>
         <ChartCard>
-          <ChartTitle>Applications over time</ChartTitle>
+          <ChartTitle>{t('dashboard.charts.applications')}</ChartTitle>
           <SwipeableChartContainer>
             <div style={{ width: '100%', minWidth: '280px', height: '250px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -1463,8 +1465,8 @@ export const Dashboard: FC = () => {
                       color: '#FFFFFF',
                       fontSize: '12px'
                     }}
-                    formatter={(value) => [`${value} applications`, 'Applications']}
-                    labelFormatter={(label) => `Week: ${label}`}
+                    formatter={(value) => [`${value} ${t('dashboard.kpi.applications').toLowerCase()}`, t('dashboard.kpi.applications')]}
+                    labelFormatter={(label) => `Uke: ${label}`}
                     itemStyle={{ color: '#FFFFFF' }}
                     labelStyle={{ color: '#FFFFFF' }}
                   />
@@ -1474,7 +1476,7 @@ export const Dashboard: FC = () => {
                     strokeDasharray="3 3"
                   >
                     <Label 
-                      value="Goal: 10/week" 
+                      value="Mål: 10/uke" 
                       position="top" 
                       fill="#EF4444" 
                       fontSize={10}
@@ -1486,17 +1488,17 @@ export const Dashboard: FC = () => {
                     stroke="#3B82F6" 
                     activeDot={{ r: 6 }} 
                     strokeWidth={2}
-                    name="Applications"
+                    name={t('dashboard.kpi.applications')}
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </SwipeableChartContainer>
-          <CustomLegend payload={[{ value: 'Applications', color: '#3B82F6' }]} />
+          <CustomLegend payload={[{ value: t('dashboard.kpi.applications'), color: '#3B82F6' }]} />
         </ChartCard>
         
         <ChartCard>
-          <ChartTitle>Tasks Completed vs Pending</ChartTitle>
+          <ChartTitle>{t('dashboard.charts.tasks')}</ChartTitle>
           <SwipeableChartContainer>
             <div style={{ width: '100%', minWidth: '280px', height: '250px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -1523,31 +1525,31 @@ export const Dashboard: FC = () => {
                     }}
                     formatter={(value, name) => {
                       if (name === 'completed' || name === 'Completed') {
-                        return [`${value} tasks`, 'Completed'];
+                        return [`${value} oppgaver`, t('tasks.completed')];
                       } else if (name === 'pending' || name === 'Pending') {
-                        return [`${value} tasks`, 'Pending'];
+                        return [`${value} oppgaver`, t('tasks.pending')];
                       }
                       return [`${value}`, `${name}`];
                     }}
-                    labelFormatter={(label) => `Week: ${label}`}
+                    labelFormatter={(label) => `Uke: ${label}`}
                     itemStyle={{ color: '#FFFFFF' }}
                     labelStyle={{ color: '#FFFFFF' }}
                   />
-                  <Bar dataKey="completed" stackId="a" name="Completed" fill="#22C55E" />
-                  <Bar dataKey="pending" stackId="a" name="Pending" fill="#B0B8C1" />
+                  <Bar dataKey="completed" stackId="a" name={t('tasks.completed')} fill="#22C55E" />
+                  <Bar dataKey="pending" stackId="a" name={t('tasks.pending')} fill="#B0B8C1" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </SwipeableChartContainer>
-          <CustomLegend payload={[{ value: 'Completed', color: '#22C55E' }, { value: 'Pending', color: '#B0B8C1' }]} />
+          <CustomLegend payload={[{ value: t('tasks.completed'), color: '#22C55E' }, { value: t('tasks.pending'), color: '#B0B8C1' }]} />
         </ChartCard>
       </ChartsRow>
 
       <InsightsRow>
         <InsightsCard>
           <InsightsHeader>
-            <InsightsTitle>Upcoming Reminders</InsightsTitle>
-            <AddButton onClick={openAddReminder}>+ Add reminder</AddButton>
+            <InsightsTitle>{t('dashboard.reminders.upcoming')}</InsightsTitle>
+            <AddButton onClick={openAddReminder}>{t('dashboard.reminder.add')}</AddButton>
           </InsightsHeader>
           <InsightsList>
             {upcomingReminders.map((reminder) => (
@@ -1567,7 +1569,7 @@ export const Dashboard: FC = () => {
         
         <InsightsCard>
           <InsightsHeader>
-            <InsightsTitle>Follow-ups Needed</InsightsTitle>
+            <InsightsTitle>{t('dashboard.reminders.followup')}</InsightsTitle>
           </InsightsHeader>
           <InsightsList>
             {followUpsNeeded.map((followUp) => (
@@ -1577,7 +1579,7 @@ export const Dashboard: FC = () => {
                     <FollowUpCompany>{followUp.company}</FollowUpCompany>
                     <FollowUpDate>{followUp.lastContact}</FollowUpDate>
                   </FollowUpContent>
-                  <ContactButton>Contact now</ContactButton>
+                  <ContactButton>Kontakt nå</ContactButton>
                 </FollowUpItem>
               </InsightsItem>
             ))}
@@ -1586,7 +1588,7 @@ export const Dashboard: FC = () => {
         
         <InsightsCard>
           <InsightsHeader>
-            <InsightsTitle>Recent Activity</InsightsTitle>
+            <InsightsTitle>{t('dashboard.reminders.recent')}</InsightsTitle>
           </InsightsHeader>
           <InsightsList>
             {recentActivity.map((activity) => (
@@ -1606,26 +1608,26 @@ export const Dashboard: FC = () => {
             ))}
           </InsightsList>
           <FilterContainer>
-            <FilterButton active>Last 7 days</FilterButton>
-            <FilterButton>Last 30 days</FilterButton>
+            <FilterButton active>Siste 7 dager</FilterButton>
+            <FilterButton>Siste 30 dager</FilterButton>
           </FilterContainer>
         </InsightsCard>
       </InsightsRow>
       {reminderOpen && (
         <ModalBackdrop onClick={() => setReminderOpen(false)}>
           <ModalCard onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>Add reminder</ModalTitle>
+            <ModalTitle>{t('dashboard.reminder.add')}</ModalTitle>
             <ModalRow>
-              <label htmlFor="rem-title" style={{ color: 'inherit', fontSize: '0.9rem' }}>Title</label>
-              <ModalInput id="rem-title" ref={titleRef} value={remTitle} onChange={(e) => setRemTitle(e.target.value)} placeholder="Follow up with company" />
+              <label htmlFor="rem-title" style={{ color: 'inherit', fontSize: '0.9rem' }}>{t('dashboard.reminder.title')}</label>
+              <ModalInput id="rem-title" ref={titleRef} value={remTitle} onChange={(e) => setRemTitle(e.target.value)} placeholder="Følg opp med bedrift" />
             </ModalRow>
             <ModalRow>
-              <label htmlFor="rem-when" style={{ color: 'inherit', fontSize: '0.9rem' }}>When</label>
+              <label htmlFor="rem-when" style={{ color: 'inherit', fontSize: '0.9rem' }}>{t('dashboard.reminder.when')}</label>
               <ModalInput id="rem-when" type="datetime-local" value={remWhen} onChange={(e) => setRemWhen(e.target.value)} />
             </ModalRow>
             <ModalActions>
-              <ModalCancel type="button" onClick={() => setReminderOpen(false)}>Cancel</ModalCancel>
-              <ModalButton type="button" onClick={saveReminder} disabled={savingReminder}>{savingReminder ? 'Saving…' : 'Save'}</ModalButton>
+              <ModalCancel type="button" onClick={() => setReminderOpen(false)}>{t('dashboard.reminder.cancel')}</ModalCancel>
+              <ModalButton type="button" onClick={saveReminder} disabled={savingReminder}>{savingReminder ? t('profile.saving') : t('dashboard.reminder.save')}</ModalButton>
             </ModalActions>
           </ModalCard>
         </ModalBackdrop>

@@ -618,18 +618,18 @@ export const Insights: FC = () => {
 
       <FiltersBar>
         <FilterGroup>
-          <Label htmlFor="time-range">Time</Label>
+          <Label htmlFor='time-range'>{t('insights.filters.timeRange')}</Label>
           <Select id="time-range" value={timeRange} onChange={(e) => setTimeRange(e.target.value as '7'|'30'|'180'|'all')}>
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="180">Last 6 months</option>
-            <option value="all">All time</option>
+            <option value="7">{t('insights.filters.last7')}</option>
+            <option value="30">{t('insights.filters.last30')}</option>
+            <option value="180">{t('insights.filters.last180')}</option>
+            <option value="all">{t('insights.filters.allTime')}</option>
           </Select>
         </FilterGroup>
         <FilterGroup>
-          <Label htmlFor="position-filter">Position</Label>
+          <Label htmlFor='position-filter'>{t('insights.filters.position')}</Label>
           <Select id="position-filter" value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)}>
-            <option value="all">All</option>
+            <option value='all'>{t('insights.filters.all')}</option>
             {positions.map(p => (
               <option key={p} value={p}>{p}</option>
             ))}
@@ -639,12 +639,12 @@ export const Insights: FC = () => {
 
       <Section>
         <InsightCard>
-          <CardHeader>Key Metrics</CardHeader>
+          <CardHeader>{t('insights.charts.keyMetrics')}</CardHeader>
           <KPIGrid>
-            <KPI><KPIValue>{kpi.total}<Trend up={kpiTrend.total>0} flat={kpiTrend.total===0}>{kpiTrend.total===0 ? '—' : (kpiTrend.total>0 ? `↑ ${kpiTrend.total}%` : `↓ ${Math.abs(kpiTrend.total)}%`)}</Trend></KPIValue><KPILabel>Total Applications</KPILabel></KPI>
-            <KPI><KPIValue>{kpi.interviews}<Trend up={kpiTrend.interviews>0} flat={kpiTrend.interviews===0}>{kpiTrend.interviews===0 ? '—' : (kpiTrend.interviews>0 ? `↑ ${kpiTrend.interviews}%` : `↓ ${Math.abs(kpiTrend.interviews)}%`)}</Trend></KPIValue><KPILabel>Interviews</KPILabel></KPI>
-            <KPI><KPIValue>{kpi.offers}<Trend up={kpiTrend.offers>0} flat={kpiTrend.offers===0}>{kpiTrend.offers===0 ? '—' : (kpiTrend.offers>0 ? `↑ ${kpiTrend.offers}%` : `↓ ${Math.abs(kpiTrend.offers)}%`)}</Trend></KPIValue><KPILabel>Offers</KPILabel></KPI>
-            <KPI><KPIValue>{kpi.successRate}%<Trend up={kpiTrend.successRate>0} flat={kpiTrend.successRate===0}>{kpiTrend.successRate===0 ? '—' : (kpiTrend.successRate>0 ? `↑ ${kpiTrend.successRate}%` : `↓ ${Math.abs(kpiTrend.successRate)}%`)}</Trend></KPIValue><KPILabel>Success Rate</KPILabel></KPI>
+            <KPI><KPIValue>{kpi.total}<Trend up={kpiTrend.total>0} flat={kpiTrend.total===0}>{kpiTrend.total===0 ? '—' : (kpiTrend.total>0 ? `↑ ${kpiTrend.total}%` : `↓ ${Math.abs(kpiTrend.total)}%`)}</Trend></KPIValue><KPILabel>{t('insights.kpi.total')}</KPILabel></KPI>
+            <KPI><KPIValue>{kpi.interviews}<Trend up={kpiTrend.interviews>0} flat={kpiTrend.interviews===0}>{kpiTrend.interviews===0 ? '—' : (kpiTrend.interviews>0 ? `↑ ${kpiTrend.interviews}%` : `↓ ${Math.abs(kpiTrend.interviews)}%`)}</Trend></KPIValue><KPILabel>{t('insights.kpi.interviews')}</KPILabel></KPI>
+            <KPI><KPIValue>{kpi.offers}<Trend up={kpiTrend.offers>0} flat={kpiTrend.offers===0}>{kpiTrend.offers===0 ? '—' : (kpiTrend.offers>0 ? `↑ ${kpiTrend.offers}%` : `↓ ${Math.abs(kpiTrend.offers)}%`)}</Trend></KPIValue><KPILabel>{t('insights.kpi.offers')}</KPILabel></KPI>
+            <KPI><KPIValue>{kpi.successRate}%<Trend up={kpiTrend.successRate>0} flat={kpiTrend.successRate===0}>{kpiTrend.successRate===0 ? '—' : (kpiTrend.successRate>0 ? `↑ ${kpiTrend.successRate}%` : `↓ ${Math.abs(kpiTrend.successRate)}%`)}</Trend></KPIValue><KPILabel>{t('insights.kpi.successRate')}</KPILabel></KPI>
           </KPIGrid>
         </InsightCard>
       </Section>
@@ -652,7 +652,7 @@ export const Insights: FC = () => {
       <Section>
         <CardsContainer>
           <InsightCard>
-            <CardHeader>Application Conversion Funnel</CardHeader>
+            <CardHeader>{t('insights.charts.funnel')}</CardHeader>
             {funnel.length > 0 ? (
               <div style={{ width: '100%', minWidth: '280px', height: '220px' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -661,15 +661,15 @@ export const Insights: FC = () => {
                     <XAxis dataKey="stage" stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <YAxis stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <Tooltip contentStyle={{ backgroundColor: '#151A24', borderColor: '#2D3748', color: '#FFFFFF', fontSize: '12px' }} formatter={(v, n) => [`${v}`, n as string]} />
-                    <Bar dataKey="count" fill="#3B82F6" name="Count" onClick={handleFunnelBarClick} />
+                    <Bar dataKey="count" fill="#3B82F6" name="Antall" onClick={handleFunnelBarClick} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? 'Loading…' : 'No data yet'}</div>)}
+            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? t('common.loading') : 'Ingen data ennå'}</div>)}
           </InsightCard>
 
           <InsightCard>
-            <CardHeader>Top Companies Applied To</CardHeader>
+            <CardHeader>{t('insights.charts.companies')}</CardHeader>
             {topCompanies.length > 0 ? (
               <div style={{ width: '100%', minWidth: '280px', height: '220px' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -678,16 +678,16 @@ export const Insights: FC = () => {
                     <XAxis dataKey="company" stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <YAxis stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <Tooltip contentStyle={{ backgroundColor: '#151A24', borderColor: '#2D3748', color: '#FFFFFF', fontSize: '12px' }}
-                             formatter={(v) => [`${v}`, 'Applications']} />
-                    <Bar dataKey="applications" fill="#8B5CF6" name="Applications" />
+                             formatter={(v) => [`${v}`, t('dashboard.kpi.applications')]} />
+                    <Bar dataKey='applications' fill='#8B5CF6' name={t('dashboard.kpi.applications')} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? 'Loading…' : 'No data yet'}</div>)}
+            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? t('common.loading') : 'Ingen data ennå'}</div>)}
           </InsightCard>
 
           <InsightCard>
-            <CardHeader>Job Application Outcomes</CardHeader>
+            <CardHeader>{t('insights.charts.outcomes')}</CardHeader>
             {outcomes.length > 0 ? (
               <div style={{ width: '100%', minWidth: '280px', height: '220px', display: 'flex', justifyContent: 'center' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -702,11 +702,11 @@ export const Insights: FC = () => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? 'Loading…' : 'No data yet'}</div>)}
+            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? t('common.loading') : 'Ingen data ennå'}</div>)}
           </InsightCard>
 
           <InsightCard>
-            <CardHeader>Time to First Response (by Company)</CardHeader>
+            <CardHeader>{t('insights.charts.responseTimeByCompany')}</CardHeader>
             {firstResponseByCompany.length > 0 ? (
               <div style={{ width: '100%', minWidth: '280px', height: '220px' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -716,11 +716,11 @@ export const Insights: FC = () => {
                     <YAxis stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <Tooltip contentStyle={{ backgroundColor: '#151A24', borderColor: '#2D3748', color: '#FFFFFF', fontSize: '12px' }}
                              formatter={(v) => [`${v} days`, 'Avg Days']} />
-                    <Bar dataKey="days" fill="#10B981" name="Days" />
+                    <Bar dataKey="days" fill="#10B981" name="Dager" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? 'Loading…' : 'No data yet'}</div>)}
+            ) : (<div style={{ color: '#B0B8C1' }}>{loading ? t('common.loading') : 'Ingen data ennå'}</div>)}
           </InsightCard>
         </CardsContainer>
       </Section>
@@ -728,7 +728,7 @@ export const Insights: FC = () => {
       <Section>
         <CardsContainer>
           <InsightCard>
-            <CardHeader>Success Rate Over Time</CardHeader>
+            <CardHeader>{t('insights.charts.successRateOverTime')}</CardHeader>
             {successRateSeries.length > 0 ? (
               <div style={{ width: '100%', minWidth: '280px', height: '220px' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -737,7 +737,7 @@ export const Insights: FC = () => {
                     <XAxis dataKey="label" stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <YAxis stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} domain={[0, 100]} />
                     <Tooltip contentStyle={{ backgroundColor: '#151A24', borderColor: '#2D3748', color: '#FFFFFF', fontSize: '12px' }} formatter={(v) => [`${v}%`, 'Success Rate']} />
-                    <Line type="monotone" dataKey="rate" stroke="#3B82F6" strokeWidth={2} activeDot={{ r: 6, onClick: (...args: unknown[]) => handleSuccessRatePointClick(args[0], args[1]) }} name="Success Rate" />
+                    <Line type="monotone" dataKey="rate" stroke="#3B82F6" strokeWidth={2} activeDot={{ r: 6, onClick: (...args: unknown[]) => handleSuccessRatePointClick(args[0], args[1]) }} name={t('insights.kpi.successRate')} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -747,7 +747,7 @@ export const Insights: FC = () => {
           </InsightCard>
           
           <InsightCard>
-            <CardHeader>Average Response Time</CardHeader>
+            <CardHeader>{t('insights.charts.avgResponseTime')}</CardHeader>
             {avgResponseSeries.length > 0 ? (
               <div style={{ width: '100%', minWidth: '280px', height: '220px' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -756,7 +756,7 @@ export const Insights: FC = () => {
                     <XAxis dataKey="label" stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <YAxis stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <Tooltip contentStyle={{ backgroundColor: '#151A24', borderColor: '#2D3748', color: '#FFFFFF', fontSize: '12px' }} formatter={(v) => [`${v} days`, 'Avg Response']} />
-                    <Line type="monotone" dataKey="days" stroke="#22C55E" strokeWidth={2} activeDot={{ r: 6 }} name="Avg Days" />
+                    <Line type="monotone" dataKey="days" stroke="#22C55E" strokeWidth={2} activeDot={{ r: 6 }} name="Gjennomsnitt dager" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -766,7 +766,7 @@ export const Insights: FC = () => {
           </InsightCard>
           
           <InsightCard>
-            <CardHeader>Interviews Over Time</CardHeader>
+            <CardHeader>{t('insights.charts.interviewsOverTime')}</CardHeader>
             {interviewsSeries.length > 0 ? (
               <div style={{ width: '100%', minWidth: '280px', height: '220px' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -774,8 +774,8 @@ export const Insights: FC = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
                     <XAxis dataKey="label" stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
                     <YAxis stroke="#B0B8C1" tick={{ fill: '#B0B8C1', fontSize: 12 }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#151A24', borderColor: '#2D3748', color: '#FFFFFF', fontSize: '12px' }} formatter={(v) => [`${v}`, 'Interviews']} />
-                    <Bar dataKey="interviews" fill="#8B5CF6" name="Interviews" />
+                    <Tooltip contentStyle={{ backgroundColor: '#151A24', borderColor: '#2D3748', color: '#FFFFFF', fontSize: '12px' }} formatter={(v) => [`${v}`, t('insights.kpi.interviews')]} />
+                    <Bar dataKey="interviews" fill="#8B5CF6" name={t('insights.kpi.interviews')} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -785,12 +785,12 @@ export const Insights: FC = () => {
           </InsightCard>
 
           <InsightCard>
-            <CardHeader>Weekly Progress</CardHeader>
+            <CardHeader>{t('insights.weekly.title')}</CardHeader>
             <WeeklyGrid>
-              <KPI><KPIValue>{weekly.apps}</KPIValue><KPILabel>Applications (7d)</KPILabel></KPI>
-              <KPI><KPIValue>{weekly.interviews}</KPIValue><KPILabel>Interviews (7d)</KPILabel></KPI>
-              <KPI><KPIValue>{weekly.offers}</KPIValue><KPILabel>Offers (7d)</KPILabel></KPI>
-              <KPI><KPIValue>{weekly.rejections}</KPIValue><KPILabel>Rejections (7d)</KPILabel></KPI>
+              <KPI><KPIValue>{weekly.apps}</KPIValue><KPILabel>{t('insights.weekly.applications')} (7d)</KPILabel></KPI>
+              <KPI><KPIValue>{weekly.interviews}</KPIValue><KPILabel>{t('insights.weekly.interviews')} (7d)</KPILabel></KPI>
+              <KPI><KPIValue>{weekly.offers}</KPIValue><KPILabel>{t('insights.weekly.offers')} (7d)</KPILabel></KPI>
+              <KPI><KPIValue>{weekly.rejections}</KPIValue><KPILabel>{t('insights.weekly.rejections')} (7d)</KPILabel></KPI>
             </WeeklyGrid>
           </InsightCard>
         </CardsContainer>
@@ -798,13 +798,13 @@ export const Insights: FC = () => {
 
       {!loading && !hasAny && (
         <EmptyStateContainer>
-          <EmptyStateTitle>No insights data available</EmptyStateTitle>
-          <EmptyStateText>Insights will be generated as you use the application.</EmptyStateText>
+          <EmptyStateTitle>Ingen innsiktsdata tilgjengelig</EmptyStateTitle>
+          <EmptyStateText>Innsikt vil bli generert når du bruker applikasjonen.</EmptyStateText>
         </EmptyStateContainer>
       )}
       {error && (
         <EmptyStateContainer>
-          <EmptyStateTitle>Something went wrong</EmptyStateTitle>
+          <EmptyStateTitle>Noe gikk galt</EmptyStateTitle>
           <EmptyStateText>{error}</EmptyStateText>
         </EmptyStateContainer>
       )}
@@ -824,7 +824,7 @@ export const Insights: FC = () => {
               ))}
             </List>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-              <button onClick={() => setDrillOpen(false)} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>Close</button>
+              <button onClick={() => setDrillOpen(false)} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{t('common.close')}</button>
             </div>
           </ModalCard>
         </ModalBackdrop>

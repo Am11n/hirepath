@@ -121,13 +121,13 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeModeProvider>
-      <GlobalStyle />
-      <I18nProvider>
+    <I18nProvider>
+      <ThemeModeProvider>
+        <GlobalStyle />
         <AuthProvider>
           <RouterProvider router={router} />
         </AuthProvider>
-      </I18nProvider>
-    </ThemeModeProvider>
+      </ThemeModeProvider>
+    </I18nProvider>
   </StrictMode>,
 )

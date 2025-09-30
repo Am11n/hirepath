@@ -699,7 +699,7 @@ export const Documents: FC = () => {
 
   const deleteDocument = async (doc: DocumentView) => {
     if (!user) return;
-    const ok = confirm(`Delete ${doc.name}?`);
+    const ok = confirm(`Slett ${doc.name}?`);
     if (!ok) return;
     setWorking(true);
     const [delObj, delRow] = await Promise.all([
@@ -708,7 +708,7 @@ export const Documents: FC = () => {
     ]);
     setWorking(false);
     if (delObj?.error || delRow?.error) {
-      alert(delObj?.error?.message || delRow?.error?.message || 'Failed to delete');
+      alert(delObj?.error?.message || delRow?.error?.message || 'Kunne ikke slette');
       return;
     }
     await refresh();
@@ -754,7 +754,7 @@ export const Documents: FC = () => {
         });
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Upload failed';
+      const message = err instanceof Error ? err.message : 'Opplasting feilet';
       setError(message);
     } finally {
       await refresh();
@@ -767,9 +767,9 @@ export const Documents: FC = () => {
       <Header>{t('nav.documents')}</Header>
       <UploadArea>
         <UploadIcon>📁</UploadIcon>
-        <UploadTitle>Drag & drop files here</UploadTitle>
-        <UploadText>or click the button below to upload documents</UploadText>
-        <UploadButton onClick={handleChooseFiles} disabled={working}>Select Files</UploadButton>
+        <UploadTitle>Dra og slipp filer her</UploadTitle>
+        <UploadText>eller klikk på knappen nedenfor for å laste opp dokumenter</UploadText>
+        <UploadButton onClick={handleChooseFiles} disabled={working}>Velg filer</UploadButton>
         <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display: 'none' }} onChange={handleFilesSelected} />
       </UploadArea>
 
@@ -778,22 +778,22 @@ export const Documents: FC = () => {
           <Table>
             <TableHead>
               <tr>
-                <TableHeader>Name</TableHeader>
-                <TableHeader>Type</TableHeader>
-                <TableHeader>Position</TableHeader>
-                <TableHeader>Last Updated</TableHeader>
-                <TableHeader style={{ textAlign: 'right' }}>Actions</TableHeader>
+                <TableHeader>{t('documents.name')}</TableHeader>
+                <TableHeader>{t('documents.type')}</TableHeader>
+                <TableHeader>Stilling</TableHeader>
+                <TableHeader>Sist oppdatert</TableHeader>
+                <TableHeader style={{ textAlign: 'right' }}>{t('common.actions')}</TableHeader>
               </tr>
             </TableHead>
             <TableBody>
               {loading && (
-                <TableRow><TableCell colSpan={5}>Loading…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5}>{t('common.loading')}</TableCell></TableRow>
               )}
               {error && !loading && (
-                <TableRow><TableCell colSpan={5} style={{ color: '#f87171' }}>Error: {error}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} style={{ color: '#f87171' }}>{t('common.error')}: {error}</TableCell></TableRow>
               )}
               {!loading && !error && rows.length === 0 && (
-                <TableRow><TableCell colSpan={5}>No documents.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5}>{t('documents.noDocuments')}</TableCell></TableRow>
               )}
               {!loading && !error && rows.map(doc => (
                 <TableRow key={doc.id}>
@@ -857,12 +857,12 @@ export const Documents: FC = () => {
       {showEdit && editDoc && (
         <ModalBackdrop>
           <ModalCard>
-            <ModalTitle>Edit Document</ModalTitle>
+            <ModalTitle>Rediger dokument</ModalTitle>
             <ModalRow>
               <div>
-                <Label htmlFor="e-app">Position (link to application)</Label>
+                <Label htmlFor="e-app">Stilling (knytt til søknad)</Label>
                 <Select id="e-app" value={editAppId} onChange={(e) => setEditAppId(e.target.value)}>
-                  <option value="">None</option>
+                  <option value="">Ingen</option>
                   {apps.map(a => (
                     <option key={a.id} value={a.id}>{a.company_name} — {a.position}</option>
                   ))}
@@ -870,10 +870,10 @@ export const Documents: FC = () => {
               </div>
             </ModalRow>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-              <ActionButton onClick={() => deleteDocument(editDoc!)} disabled={working}>Delete</ActionButton>
+              <ActionButton onClick={() => deleteDocument(editDoc!)} disabled={working}>{t('common.delete')}</ActionButton>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <ActionButton onClick={() => { setShowEdit(false); setEditDoc(null); }} disabled={working}>Cancel</ActionButton>
-                <ActionButton onClick={saveEdit} disabled={working}>Save</ActionButton>
+                <ActionButton onClick={() => { setShowEdit(false); setEditDoc(null); }} disabled={working}>{t('common.cancel')}</ActionButton>
+                <ActionButton onClick={saveEdit} disabled={working}>{t('common.save')}</ActionButton>
               </div>
             </div>
           </ModalCard>

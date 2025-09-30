@@ -938,7 +938,7 @@ export const Applications: FC = () => {
   const handleSave = async () => {
     if (!user) return;
     if (!company.trim() || !position.trim()) {
-      setSaveError('Company and Position are required');
+      setSaveError(t('applications.companyRequired'));
       return;
     }
     setSaving(true);
@@ -957,7 +957,7 @@ export const Applications: FC = () => {
       setShowCreate(false);
       await refresh();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to create application';
+      const message = e instanceof Error ? e.message : t('applications.createFailed');
       setSaveError(message);
     } finally {
       setSaving(false);
@@ -984,7 +984,7 @@ export const Applications: FC = () => {
   const handleUpdate = async () => {
     if (!user || !editId) return;
     if (!eCompany.trim() || !ePosition.trim()) {
-      setSaveErrorEdit('Company and Position are required');
+      setSaveErrorEdit(t('applications.companyRequired'));
       return;
     }
     setSavingEdit(true);
@@ -1016,7 +1016,7 @@ export const Applications: FC = () => {
       await new Promise(res => setTimeout(res, 100));
       await refresh();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to update application';
+      const message = e instanceof Error ? e.message : t('applications.updateFailed');
       setSaveErrorEdit(message);
     } finally {
       setSavingEdit(false);
@@ -1240,6 +1240,17 @@ export const Applications: FC = () => {
 
   const { t } = useI18n();
 
+  // Helper function to translate status values
+  const translateStatus = (status: string): string => {
+    switch (status) {
+      case 'Applied': return t('applications.status.applied');
+      case 'Interview': return t('applications.status.interview');
+      case 'Offer': return t('applications.status.offer');
+      case 'Rejected': return t('applications.status.rejected');
+      default: return status;
+    }
+  };
+
   return (
     <ApplicationsContainer>
       <TopBar>
@@ -1247,7 +1258,7 @@ export const Applications: FC = () => {
         <ViewToggle>
           <ToggleButton $active={view==='list'} onClick={() => setView('list')}>List</ToggleButton>
           <ToggleButton $active={view==='kanban'} onClick={() => setView('kanban')}>Kanban</ToggleButton>
-          <CreateButtonInline onClick={handleOpenCreate}>Create Application</CreateButtonInline>
+          <CreateButtonInline onClick={handleOpenCreate}>{t('applications.createApplication')}</CreateButtonInline>
         </ViewToggle>
       </TopBar>
 
@@ -1255,45 +1266,45 @@ export const Applications: FC = () => {
         <>
           <FiltersContainer>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <FilterHeader style={{ margin: 0 }}>Filters</FilterHeader>
-              <SecondaryButton type="button" onClick={() => setFiltersOpen(v=>!v)}>{filtersOpen ? 'Hide' : 'Show'}</SecondaryButton>
+              <FilterHeader style={{ margin: 0 }}>{t('applications.filters')}</FilterHeader>
+              <SecondaryButton type="button" onClick={() => setFiltersOpen(v=>!v)}>{filtersOpen ? 'Skjul' : 'Vis'}</SecondaryButton>
             </div>
             {filtersOpen && (
               <FilterOptions>
                 <FilterGroup>
-                  <FilterLabel>Status</FilterLabel>
+                  <FilterLabel>{t('applications.status')}</FilterLabel>
                   <FilterSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | 'Applied' | 'Interview' | 'Offer' | 'Rejected')}>
-                    <option value="all">All Statuses</option>
-                    <option>Applied</option>
-                    <option>Interview</option>
-                    <option>Offer</option>
-                    <option>Rejected</option>
+                    <option value="all">Alle statuser</option>
+                    <option value="Applied">{t('applications.status.applied')}</option>
+                    <option value="Interview">{t('applications.status.interview')}</option>
+                    <option value="Offer">{t('applications.status.offer')}</option>
+                    <option value="Rejected">{t('applications.status.rejected')}</option>
                   </FilterSelect>
                 </FilterGroup>
                 <FilterGroup>
-                  <FilterLabel>Company</FilterLabel>
+                  <FilterLabel>{t('applications.company')}</FilterLabel>
                   <FilterSelect value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
-                    <option value="all">All Companies</option>
+                    <option value="all">Alle bedrifter</option>
                     {companies.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </FilterSelect>
                 </FilterGroup>
                 <FilterGroup>
-                  <FilterLabel>Date Range</FilterLabel>
+                  <FilterLabel>{t('applications.dateRange')}</FilterLabel>
                   <FilterSelect value={dateRangeFilter} onChange={(e) => setDateRangeFilter(e.target.value as 'all' | '7' | '30' | '90')}>
-                    <option value="all">All Time</option>
-                    <option value="7">Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="90">Last 90 Days</option>
+                    <option value="all">Hele tiden</option>
+                    <option value="7">{t('applications.last7Days')}</option>
+                    <option value="30">{t('applications.last30Days')}</option>
+                    <option value="90">{t('applications.last90Days')}</option>
                   </FilterSelect>
                 </FilterGroup>
                 <FilterGroup>
-                  <FilterLabel>Sort by</FilterLabel>
+                  <FilterLabel>{t('applications.sortBy')}</FilterLabel>
                   <FilterSelect value={sortField} onChange={(e) => setSortField(e.target.value as 'applied_date'|'company_name'|'status')}>
-                    <option value="applied_date">Applied Date</option>
-                    <option value="company_name">Company</option>
-                    <option value="status">Status</option>
+                    <option value='applied_date'>{t('applications.appliedDate')}</option>
+                    <option value='company_name'>{t('applications.company')}</option>
+                    <option value='status'>{t('applications.status')}</option>
                   </FilterSelect>
                 </FilterGroup>
               </FilterOptions>
@@ -1304,13 +1315,13 @@ export const Applications: FC = () => {
             <BulkBar>
               <span style={{ color:'#94A3B8' }}>{selectedIds.size} selected</span>
               <SmallSelectInline value={bulkStatus} onChange={(e)=>setBulkStatus(e.target.value as Status)}>
-                <option>Applied</option>
-                <option>Interview</option>
-                <option>Offer</option>
-                <option>Rejected</option>
+                <option value="Applied">{t('applications.status.applied')}</option>
+                <option value="Interview">{t('applications.status.interview')}</option>
+                <option value="Offer">{t('applications.status.offer')}</option>
+                <option value="Rejected">{t('applications.status.rejected')}</option>
               </SmallSelectInline>
-              <PrimaryButton type="button" onClick={bulkUpdateStatus}>Change Status</PrimaryButton>
-              <DangerButton type="button" onClick={bulkDelete}>Delete</DangerButton>
+              <PrimaryButton type="button" onClick={bulkUpdateStatus}>{t('applications.changeStatus')}</PrimaryButton>
+              <DangerButton type="button" onClick={bulkDelete}>{t('common.delete')}</DangerButton>
             </BulkBar>
           )}
 
@@ -1321,13 +1332,13 @@ export const Applications: FC = () => {
                   <TableHeader style={{ width: 36 }}>
                     <Checkbox checked={allVisibleSelected} onChange={toggleAllVisible} />
                   </TableHeader>
-                  <TableHeader>Company</TableHeader>
-                  <TableHeader>Position</TableHeader>
-                  <TableHeader>Date Applied</TableHeader>
-                  <TableHeader>Status</TableHeader>
-                  <TableHeader>Status Date</TableHeader>
-                  <TableHeader>Next Action</TableHeader>
-                  <TableHeader>Actions</TableHeader>
+                  <TableHeader>{t('applications.table.company')}</TableHeader>
+                  <TableHeader>{t('applications.table.position')}</TableHeader>
+                  <TableHeader>{t('applications.table.dateApplied')}</TableHeader>
+                  <TableHeader>{t('applications.table.status')}</TableHeader>
+                  <TableHeader>{t('applications.table.statusDate')}</TableHeader>
+                  <TableHeader>{t('applications.table.nextAction')}</TableHeader>
+                  <TableHeader>{t('applications.table.actions')}</TableHeader>
                 </tr>
               </TableHead>
               <TableBody>
@@ -1351,14 +1362,14 @@ export const Applications: FC = () => {
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Relative>
                         <StatusPill status={app.status as Status} onClick={(e) => toggleStatusMenu(e, app.id)}>
-                          <StatusDot status={app.status} />{app.status}
+                          <StatusDot status={app.status} />{translateStatus(app.status)}
                         </StatusPill>
                         {statusOpenId === app.id && (
                           <StatusMenu>
-                            <StatusMenuItem status="Applied" onClick={() => updateStatusInline(app.id, 'Applied')}><StatusDot status="Applied" />Applied</StatusMenuItem>
-                            <StatusMenuItem status="Interview" onClick={() => updateStatusInline(app.id, 'Interview')}><StatusDot status="Interview" />Interview</StatusMenuItem>
-                            <StatusMenuItem status="Offer" onClick={() => updateStatusInline(app.id, 'Offer')}><StatusDot status="Offer" />Offer</StatusMenuItem>
-                            <StatusMenuItem status="Rejected" onClick={() => updateStatusInline(app.id, 'Rejected')}><StatusDot status="Rejected" />Rejected</StatusMenuItem>
+                            <StatusMenuItem status="Applied" onClick={() => updateStatusInline(app.id, 'Applied')}><StatusDot status="Applied" />{t('applications.status.applied')}</StatusMenuItem>
+                            <StatusMenuItem status="Interview" onClick={() => updateStatusInline(app.id, 'Interview')}><StatusDot status="Interview" />{t('applications.status.interview')}</StatusMenuItem>
+                            <StatusMenuItem status="Offer" onClick={() => updateStatusInline(app.id, 'Offer')}><StatusDot status="Offer" />{t('applications.status.offer')}</StatusMenuItem>
+                            <StatusMenuItem status="Rejected" onClick={() => updateStatusInline(app.id, 'Rejected')}><StatusDot status="Rejected" />{t('applications.status.rejected')}</StatusMenuItem>
                           </StatusMenu>
                         )}
                       </Relative>
@@ -1375,9 +1386,9 @@ export const Applications: FC = () => {
                           <KebabButton onClick={(e) => toggleActionMenu(e, app.id)}>⋮</KebabButton>
                           {actionOpenId === app.id && (
                             <ActionMenu>
-                              <ActionItem onClick={() => handleOpenEdit(app)}>Edit</ActionItem>
-                              <ActionItem onClick={() => deleteApplication(app.id)}>Delete</ActionItem>
-                              <ActionItem onClick={() => markFollowedUp(app.id)}>Mark Followed Up</ActionItem>
+                              <ActionItem onClick={() => handleOpenEdit(app)}>{t('common.edit')}</ActionItem>
+                              <ActionItem onClick={() => deleteApplication(app.id)}>{t('common.delete')}</ActionItem>
+                              <ActionItem onClick={() => markFollowedUp(app.id)}>{t('applications.markFollowedUp')}</ActionItem>
                             </ActionMenu>
                           )}
                         </Relative>
@@ -1393,7 +1404,7 @@ export const Applications: FC = () => {
             <EmptyStateContainer>
               <EmptyStateTitle>No applications found</EmptyStateTitle>
               <EmptyStateText>Create a new application to add to your list.</EmptyStateText>
-              <CreateButton onClick={handleOpenCreate}>Create Application</CreateButton>
+              <CreateButton onClick={handleOpenCreate}>{t('applications.createApplication')}</CreateButton>
             </EmptyStateContainer>
           )}
         </>
@@ -1403,37 +1414,37 @@ export const Applications: FC = () => {
         <>
           <FiltersContainer>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <FilterHeader style={{ margin: 0 }}>Filters</FilterHeader>
-              <SecondaryButton type="button" onClick={() => setFiltersOpen(v=>!v)}>{filtersOpen ? 'Hide' : 'Show'}</SecondaryButton>
+              <FilterHeader style={{ margin: 0 }}>{t('applications.filters')}</FilterHeader>
+              <SecondaryButton type="button" onClick={() => setFiltersOpen(v=>!v)}>{filtersOpen ? 'Skjul' : 'Vis'}</SecondaryButton>
             </div>
             {filtersOpen && (
               <FilterOptions>
                 <FilterGroup>
-                  <FilterLabel>Status</FilterLabel>
+                  <FilterLabel>{t('applications.status')}</FilterLabel>
                   <FilterSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | 'Applied' | 'Interview' | 'Offer' | 'Rejected')}>
-                    <option value="all">All Statuses</option>
-                    <option>Applied</option>
-                    <option>Interview</option>
-                    <option>Offer</option>
-                    <option>Rejected</option>
+                    <option value="all">Alle statuser</option>
+                    <option value="Applied">{t('applications.status.applied')}</option>
+                    <option value="Interview">{t('applications.status.interview')}</option>
+                    <option value="Offer">{t('applications.status.offer')}</option>
+                    <option value="Rejected">{t('applications.status.rejected')}</option>
                   </FilterSelect>
                 </FilterGroup>
                 <FilterGroup>
-                  <FilterLabel>Company</FilterLabel>
+                  <FilterLabel>{t('applications.company')}</FilterLabel>
                   <FilterSelect value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
-                    <option value="all">All Companies</option>
+                    <option value="all">Alle bedrifter</option>
                     {companies.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </FilterSelect>
                 </FilterGroup>
                 <FilterGroup>
-                  <FilterLabel>Date Range</FilterLabel>
+                  <FilterLabel>{t('applications.dateRange')}</FilterLabel>
                   <FilterSelect value={dateRangeFilter} onChange={(e) => setDateRangeFilter(e.target.value as 'all' | '7' | '30' | '90')}>
-                    <option value="all">All Time</option>
-                    <option value="7">Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="90">Last 90 Days</option>
+                    <option value="all">Hele tiden</option>
+                    <option value="7">{t('applications.last7Days')}</option>
+                    <option value="30">{t('applications.last30Days')}</option>
+                    <option value="90">{t('applications.last90Days')}</option>
                   </FilterSelect>
                 </FilterGroup>
               </FilterOptions>
@@ -1443,9 +1454,9 @@ export const Applications: FC = () => {
           <Kanban>
             <Column $variant="applied" data-status="Applied" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Applied')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ColumnHeader>Applied ({byStatus('Applied').length})</ColumnHeader>
+                <ColumnHeader>{t('applications.status.applied')} ({byStatus('Applied').length})</ColumnHeader>
                 <ColumnHeaderRight>
-                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Applied')}>+ Add</AddMini>
+                  <AddMini type='button' onClick={() => handleOpenCreateWithStatus('Applied')}>+ {t('common.add')}</AddMini>
                 </ColumnHeaderRight>
               </div>
               {byStatus('Applied').map(app => (
@@ -1459,7 +1470,7 @@ export const Applications: FC = () => {
                   onClick={() => openPreview(app)}
                   style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
                 >
-                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title={t('common.delete')}>
                     🗑
                   </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
@@ -1467,16 +1478,16 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
+                    <EditButton type='button' onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>{t('common.edit')}</EditButton>
                   </div>
                 </Card>
               ))}
             </Column>
             <Column $variant="interview" data-status="Interview" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Interview')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ColumnHeader>Interview ({byStatus('Interview').length})</ColumnHeader>
+                <ColumnHeader>{t('applications.status.interview')} ({byStatus('Interview').length})</ColumnHeader>
                 <ColumnHeaderRight>
-                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Interview')}>+ Add</AddMini>
+                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Interview')}>+ {t('common.add')}</AddMini>
                 </ColumnHeaderRight>
               </div>
               {byStatus('Interview').map(app => (
@@ -1490,7 +1501,7 @@ export const Applications: FC = () => {
                   onClick={() => openPreview(app)}
                   style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
                 >
-                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title={t('common.delete')}>
                     🗑
                   </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
@@ -1498,16 +1509,16 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
+                    <EditButton type='button' onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>{t('common.edit')}</EditButton>
                   </div>
                 </Card>
               ))}
             </Column>
             <Column $variant="offer" data-status="Offer" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Offer')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ColumnHeader>Offer ({byStatus('Offer').length})</ColumnHeader>
+                <ColumnHeader>{t('applications.status.offer')} ({byStatus('Offer').length})</ColumnHeader>
                 <ColumnHeaderRight>
-                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Offer')}>+ Add</AddMini>
+                  <AddMini type='button' onClick={() => handleOpenCreateWithStatus('Offer')}>+ {t('common.add')}</AddMini>
                 </ColumnHeaderRight>
               </div>
               {byStatus('Offer').map(app => (
@@ -1521,7 +1532,7 @@ export const Applications: FC = () => {
                   onClick={() => openPreview(app)}
                   style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
                 >
-                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title={t('common.delete')}>
                     🗑
                   </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
@@ -1529,16 +1540,16 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
+                    <EditButton type='button' onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>{t('common.edit')}</EditButton>
                   </div>
                 </Card>
               ))}
             </Column>
             <Column $variant="rejected" data-status="Rejected" onDragOver={allowDrop} onDrop={(e) => handleColumnDrop(e, 'Rejected')}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ColumnHeader>Rejected ({byStatus('Rejected').length})</ColumnHeader>
+                <ColumnHeader>{t('applications.status.rejected')} ({byStatus('Rejected').length})</ColumnHeader>
                 <ColumnHeaderRight>
-                  <AddMini type="button" onClick={() => handleOpenCreateWithStatus('Rejected')}>+ Add</AddMini>
+                  <AddMini type='button' onClick={() => handleOpenCreateWithStatus('Rejected')}>+ {t('common.add')}</AddMini>
                 </ColumnHeaderRight>
               </div>
               {byStatus('Rejected').map(app => (
@@ -1552,7 +1563,7 @@ export const Applications: FC = () => {
                   onClick={() => openPreview(app)}
                   style={{ cursor:'pointer', opacity: touchDragAppId === app.id ? 0.4 : 1 }}
                 >
-                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title="Delete">
+                  <CardDeleteBtn type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(app.id); }} title={t('common.delete')}>
                     🗑
                   </CardDeleteBtn>
                   <div style={{ fontWeight: 700 }}>{app.position}</div>
@@ -1560,7 +1571,7 @@ export const Applications: FC = () => {
                   <div style={{ fontSize: '0.8rem' }}>Next: {nextActionByApp[app.id]?.title || '-'}</div>
                   <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem' }}>{app.applied_date || '-'}</span>
-                    <EditButton type="button" onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>Edit</EditButton>
+                    <EditButton type='button' onClick={(e) => { e.stopPropagation(); handleOpenEdit(app); }}>{t('common.edit')}</EditButton>
                   </div>
                 </Card>
               ))}
@@ -1577,31 +1588,31 @@ export const Applications: FC = () => {
       {showCreate && (
         <ModalBackdrop>
           <ModalCard>
-            <ModalTitle>Create Application</ModalTitle>
+            <ModalTitle>{t('applications.modal.createTitle')}</ModalTitle>
             <ModalRow>
               <div>
-                <Label htmlFor="company">Company</Label>
-                <Input id="company" placeholder="Company name" value={company} onChange={(e) => setCompany(e.target.value)} />
+                <Label htmlFor='company'>{t('applications.company')}</Label>
+                <Input id="company" placeholder={t('applications.company')} value={company} onChange={(e) => setCompany(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="position">Position</Label>
-                <Input id="position" placeholder="Job title" value={position} onChange={(e) => setPosition(e.target.value)} />
+                <Label htmlFor='position'>{t('applications.position')}</Label>
+                <Input id="position" placeholder={t('applications.position')} value={position} onChange={(e) => setPosition(e.target.value)} />
               </div>
             </ModalRow>
             <ModalRow>
               <div>
-                <Label htmlFor="applied">Applied Date</Label>
+                <Label htmlFor='applied'>{t('applications.appliedDate')}</Label>
                 <Input id="applied" type="date" value={appliedDate} onChange={(e) => setAppliedDate(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="url">Job URL (optional)</Label>
+                <Label htmlFor='url'>{t('applications.url')} (valgfritt)</Label>
                 <Input id="url" placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} />
               </div>
             </ModalRow>
             {saveError && <div style={{ color: '#f87171', marginTop: '0.25rem' }}>{saveError}</div>}
             <ModalActions>
-              <SecondaryButton type="button" onClick={() => setShowCreate(false)} disabled={saving}>Cancel</SecondaryButton>
-              <PrimaryButton type="button" onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryButton>
+              <SecondaryButton type="button" onClick={() => setShowCreate(false)} disabled={saving}>{t('common.cancel')}</SecondaryButton>
+              <PrimaryButton type="button" onClick={handleSave} disabled={saving}>{saving ? t('profile.saving') : t('common.save')}</PrimaryButton>
             </ModalActions>
           </ModalCard>
         </ModalBackdrop>
@@ -1610,52 +1621,52 @@ export const Applications: FC = () => {
       {showEdit && (
         <ModalBackdrop>
           <ModalCard>
-            <ModalTitle>Edit Application</ModalTitle>
+            <ModalTitle>{t('applications.modal.editTitle')}</ModalTitle>
             <ModalRow>
               <div>
-                <Label htmlFor="e-company">Company</Label>
-                <Input id="e-company" placeholder="Company name" value={eCompany} onChange={(e) => setECompany(e.target.value)} />
+                <Label htmlFor='e-company'>{t('applications.table.company')}</Label>
+                <Input id="e-company" placeholder={t('applications.company')} value={eCompany} onChange={(e) => setECompany(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="e-position">Position</Label>
-                <Input id="e-position" placeholder="Job title" value={ePosition} onChange={(e) => setEPosition(e.target.value)} />
+                <Label htmlFor='e-position'>{t('applications.table.position')}</Label>
+                <Input id="e-position" placeholder={t('applications.position')} value={ePosition} onChange={(e) => setEPosition(e.target.value)} />
               </div>
             </ModalRow>
             <ModalRow>
               <div>
-                <Label htmlFor="e-status">Status</Label>
+                <Label htmlFor='e-status'>{t('applications.table.status')}</Label>
                 <FilterSelect id="e-status" value={eStatus || 'Applied'} onChange={(e) => setEStatus(e.target.value as 'Applied' | 'Interview' | 'Offer' | 'Rejected')}>
-                  <option>Applied</option>
-                  <option>Interview</option>
-                  <option>Offer</option>
-                  <option>Rejected</option>
+                  <option value="Applied">{t('applications.status.applied')}</option>
+                  <option value="Interview">{t('applications.status.interview')}</option>
+                  <option value="Offer">{t('applications.status.offer')}</option>
+                  <option value="Rejected">{t('applications.status.rejected')}</option>
                 </FilterSelect>
               </div>
               <div>
-                <Label htmlFor="e-applied">Applied Date</Label>
+                <Label htmlFor='e-applied'>{t('applications.table.dateApplied')}</Label>
                 <Input id="e-applied" type="date" value={eAppliedDate} onChange={(e) => setEAppliedDate(e.target.value)} />
               </div>
             </ModalRow>
             <ModalRow>
               <div>
-                <Label htmlFor="e-status-date">Status Date</Label>
+                <Label htmlFor='e-status-date'>{t('applications.table.statusDate')}</Label>
                 <Input id="e-status-date" type="date" value={eStatusDate} onChange={(e) => setEStatusDate(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="e-url">Job URL (optional)</Label>
+                <Label htmlFor='e-url'>{t('applications.url')}</Label>
                 <Input id="e-url" placeholder="https://..." value={eUrl} onChange={(e) => setEUrl(e.target.value)} />
               </div>
             </ModalRow>
             <ModalRow>
               <div style={{ gridColumn: '1 / -1' }}>
-                <Label htmlFor="e-notes">Notes</Label>
+                <Label htmlFor='e-notes'>{t('applications.notes')}</Label>
                 <Input as="textarea" id="e-notes" rows={4} value={eNotes} onChange={(e) => setENotes(e.target.value)} />
               </div>
             </ModalRow>
             {saveErrorEdit && <div style={{ color: '#f87171', marginTop: '0.25rem' }}>{saveErrorEdit}</div>}
             <ModalActions>
-              <SecondaryButton type="button" onClick={() => setShowEdit(false)} disabled={savingEdit}>Cancel</SecondaryButton>
-              <PrimaryButton type="button" onClick={handleUpdate} disabled={savingEdit}>{savingEdit ? 'Saving…' : 'Save Changes'}</PrimaryButton>
+              <SecondaryButton type="button" onClick={() => setShowEdit(false)} disabled={savingEdit}>{t('common.cancel')}</SecondaryButton>
+              <PrimaryButton type="button" onClick={handleUpdate} disabled={savingEdit}>{savingEdit ? t('profile.saving') : 'Lagre endringer'}</PrimaryButton>
             </ModalActions>
           </ModalCard>
         </ModalBackdrop>
@@ -1668,8 +1679,8 @@ export const Applications: FC = () => {
               Are you sure you want to delete this application? This action cannot be undone.
             </p>
             <ModalActions>
-              <SecondaryButton type="button" onClick={() => setConfirmDeleteId(null)}>Cancel</SecondaryButton>
-              <DangerButton type="button" onClick={async () => { await deleteApplication(confirmDeleteId); setConfirmDeleteId(null); }}>Delete</DangerButton>
+              <SecondaryButton type="button" onClick={() => setConfirmDeleteId(null)}>{t('common.cancel')}</SecondaryButton>
+              <DangerButton type="button" onClick={async () => { await deleteApplication(confirmDeleteId); setConfirmDeleteId(null); }}>{t('common.delete')}</DangerButton>
             </ModalActions>
           </ModalCard>
         </ModalBackdrop>
@@ -1678,23 +1689,23 @@ export const Applications: FC = () => {
       {showPreview && previewApp && (
         <ModalBackdrop>
           <ModalCard onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>Application Details</ModalTitle>
-            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Company</div>
+            <ModalTitle>{t('applications.modal.title')}</ModalTitle>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>{t('applications.table.company')}</div>
             <div style={{ color: 'inherit', fontWeight: 600, marginBottom: '0.5rem' }}>{previewApp.company_name}</div>
-            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Position</div>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>{t('applications.table.position')}</div>
             <div style={{ color: 'inherit', marginBottom: '0.75rem' }}>{previewApp.position}</div>
 
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'0.75rem' }}>
               <div>
-                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Status</div>
-                <div style={{ color:'inherit' }}>{String(previewApp.status)}</div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>{t('applications.table.status')}</div>
+                <div style={{ color:'inherit' }}>{translateStatus(String(previewApp.status))}</div>
               </div>
               <div>
-                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Applied Date</div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>{t('applications.table.dateApplied')}</div>
                 <div style={{ color:'inherit' }}>{previewApp.applied_date ?? '-'}</div>
               </div>
               <div>
-                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Status Date</div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>{t('applications.table.statusDate')}</div>
                 <div style={{ color:'inherit' }}>{
                   (() => {
                     const s = String(previewApp.status);
@@ -1706,31 +1717,31 @@ export const Applications: FC = () => {
                 }</div>
               </div>
               <div>
-                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Created</div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Opprettet</div>
                 <div style={{ color:'inherit' }}>{(previewApp as any).created_at ? new Date((previewApp as any).created_at).toLocaleDateString() : '-'}</div>
               </div>
               <div>
-                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Updated</div>
+                <div style={{ color:'#94A3B8', marginBottom:'0.25rem' }}>Oppdatert</div>
                 <div style={{ color:'inherit' }}>{(previewApp as any).updated_at ? new Date((previewApp as any).updated_at).toLocaleDateString() : '-'}</div>
               </div>
             </div>
 
-            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Next Action</div>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>{t('applications.table.nextAction')}</div>
             <div style={{ color:'inherit', marginBottom:'0.75rem' }}>{
               (()=>{ const na = nextActionByApp[previewApp.id]; if (!na) return '-'; const dueStr = na.due ? ` • ${new Date(na.due).toLocaleDateString()}` : ''; return `${na.title}${dueStr}`; })()
             }</div>
 
-            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>Notes</div>
+            <div style={{ color: '#94A3B8', marginBottom: '0.5rem' }}>{t('applications.notes')}</div>
             <div style={{ color: 'inherit', whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>{previewApp.notes || '-'}</div>
 
             {previewApp.url && (
               <div style={{ marginBottom: '1rem' }}>
-                <a href={previewApp.url} target="_blank" rel="noreferrer" style={{ color: '#60a5fa', textDecoration: 'underline' }}>Open job link</a>
+                <a href={previewApp.url} target="_blank" rel="noreferrer" style={{ color: '#60a5fa', textDecoration: 'underline' }}>Åpne jobblenke</a>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <SecondaryButton type="button" onClick={() => setShowPreview(false)}>Close</SecondaryButton>
-              <PrimaryButton type="button" onClick={() => { setShowPreview(false); handleOpenEdit(previewApp); }}>Edit</PrimaryButton>
+              <SecondaryButton type="button" onClick={() => setShowPreview(false)}>{t('common.close')}</SecondaryButton>
+              <PrimaryButton type="button" onClick={() => { setShowPreview(false); handleOpenEdit(previewApp); }}>{t('common.edit')}</PrimaryButton>
             </div>
           </ModalCard>
         </ModalBackdrop>

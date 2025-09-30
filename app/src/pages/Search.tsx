@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import styled from 'styled-components';
+import { useI18n } from '../contexts/I18nProvider';
 
 const SearchContainer = styled.div`
   width: 100%;
@@ -224,6 +225,7 @@ const NoResultsText = styled.p`
 `;
 
 export const Search: FC = () => {
+  const { t } = useI18n();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -286,14 +288,14 @@ export const Search: FC = () => {
 
   return (
     <SearchContainer>
-      <Header>Search Results for "{searchQuery}"</Header>
+      <Header>{t('search.title').replace('"{query}"', `"${searchQuery}"`)}</Header>
       
       <SearchResultsContainer>
         <TabsContainer>
-          <Tab $active={activeTab === 'all'} onClick={() => setActiveTab('all')}>All</Tab>
-          <Tab $active={activeTab === 'applications'} onClick={() => setActiveTab('applications')}>Applications</Tab>
-          <Tab $active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')}>Tasks</Tab>
-          <Tab $active={activeTab === 'documents'} onClick={() => setActiveTab('documents')}>Documents</Tab>
+          <Tab $active={activeTab === 'all'} onClick={() => setActiveTab('all')}>{t('search.tabs.all')}</Tab>
+          <Tab $active={activeTab === 'applications'} onClick={() => setActiveTab('applications')}>{t('search.tabs.applications')}</Tab>
+          <Tab $active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')}>{t('search.tabs.tasks')}</Tab>
+          <Tab $active={activeTab === 'documents'} onClick={() => setActiveTab('documents')}>{t('search.tabs.documents')}</Tab>
         </TabsContainer>
         
         {filteredResults.length > 0 ? (
@@ -311,8 +313,8 @@ export const Search: FC = () => {
           </ResultsList>
         ) : (
           <NoResults>
-            <NoResultsTitle>No results found</NoResultsTitle>
-            <NoResultsText>Try adjusting your search terms or browse through different categories.</NoResultsText>
+            <NoResultsTitle>{t('search.noResults.title')}</NoResultsTitle>
+            <NoResultsText>{t('search.noResults.text')}</NoResultsText>
           </NoResults>
         )}
       </SearchResultsContainer>
