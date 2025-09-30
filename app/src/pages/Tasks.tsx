@@ -757,8 +757,8 @@ export const Tasks: FC = () => {
     setEditId(row.id);
     setETitle(row.title);
     setEDueDate(row.due_date || '');
-    const t = row.type;
-    setEType(t === 'note' || t === 'call' || t === 'email' || t === 'meeting' || t === 'other' ? (t as 'note' | 'call' | 'email' | 'meeting' | 'other') : 'note');
+    const taskType = row.type;
+    setEType(taskType === 'note' || taskType === 'call' || taskType === 'email' || taskType === 'meeting' || taskType === 'other' ? (taskType as 'note' | 'call' | 'email' | 'meeting' | 'other') : 'note');
     setECompleted(!!row.completed);
     setEApplicationId(row.job_application_id || '');
     if (row.job_application_id) {
@@ -900,10 +900,10 @@ export const Tasks: FC = () => {
   };
   const handleTaskTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!touchTaskId) return;
-    const t = e.touches[0];
-    if (!t) return;
-    setTouchGhost(g => (g ? { ...g, x: t.clientX, y: t.clientY } : { x: t.clientX, y: t.clientY, text: '' }));
-    const s = findTaskStatusAtPoint(t.clientX, t.clientY);
+    const touch = e.touches[0];
+    if (!touch) return;
+    setTouchGhost(g => (g ? { ...g, x: touch.clientX, y: touch.clientY } : { x: touch.clientX, y: touch.clientY, text: '' }));
+    const s = findTaskStatusAtPoint(touch.clientX, touch.clientY);
     if (s) setTouchTaskTo(s);
     if (e.cancelable) e.preventDefault();
   };
