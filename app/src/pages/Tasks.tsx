@@ -997,36 +997,36 @@ export const Tasks: FC = () => {
               <TaskColumnHeader>{t('tasks.toDo')} ({tasksBy('todo').length})</TaskColumnHeader>
               <AddMini type='button' onClick={() => openCreateInStatus('todo')}>+ {t('tasks.add')}</AddMini>
             </div>
-            {tasksBy('todo').map(t => (
+            {tasksBy('todo').map(task => (
               <TaskCard
-                key={t.id}
+                key={task.id}
                 draggable
-                onDragStart={(e) => handleTaskDragStart(e, t.id)}
-                onTouchStart={() => handleTaskTouchStart(t.id, t.title)}
+                onDragStart={(e) => handleTaskDragStart(e, task.id)}
+                onTouchStart={() => handleTaskTouchStart(task.id, task.title)}
                 onTouchMove={handleTaskTouchMove}
                 onTouchEnd={handleTaskTouchEnd}
-                title={deadlineStatusLabel(t.due_date)}
-                onClick={() => openPreview(t)}
-                style={{ cursor: 'pointer', opacity: touchTaskId === t.id ? 0.4 : 1 }}
+                title={deadlineStatusLabel(task.due_date, t)}
+                onClick={() => openPreview(task)}
+                style={{ cursor: 'pointer', opacity: touchTaskId === task.id ? 0.4 : 1 }}
               >
-                <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(t.due_date)}`, paddingTop: '4px' }}>{t.title}</div>
-                {t.job_application_id ? (() => {
-                  const a = appById.get(t.job_application_id!);
+                <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(task.due_date)}`, paddingTop: '4px' }}>{task.title}</div>
+                {task.job_application_id ? (() => {
+                  const a = appById.get(task.job_application_id!);
                   const label = a ? `${a.company_name} — ${a.position}` : 'Linked application';
                   return (
-                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + t.job_application_id) }}>
+                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + task.job_application_id) }}>
                       {label}
                     </TaskApplication>
                   );
                 })() : (
                   <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>General Task</span>
                 )}
-                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {t.due_date ?? '-'}</div>
+                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {task.due_date ?? '-'}</div>
                 <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
+                  <span style={{ fontSize: '0.8rem' }}>{task.created_at ? new Date(task.created_at).toLocaleDateString() : ''}</span>
                   <div style={{ display:'flex', gap: '0.4rem' }}>
-                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>{t('common.edit')}</ActionButton>
-                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(task); }}>{t('common.edit')}</ActionButton>
+                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>🗑</DeleteIconButton>
                   </div>
                 </div>
               </TaskCard>
@@ -1038,36 +1038,36 @@ export const Tasks: FC = () => {
               <TaskColumnHeader>{t('tasks.inProgress')} ({tasksBy('in_progress').length})</TaskColumnHeader>
               <AddMini type='button' onClick={() => openCreateInStatus('in_progress')}>+ {t('tasks.add')}</AddMini>
             </div>
-            {tasksBy('in_progress').map(t => (
+            {tasksBy('in_progress').map(task => (
               <TaskCard
-                key={t.id}
+                key={task.id}
                 draggable
-                onDragStart={(e) => handleTaskDragStart(e, t.id)}
-                onTouchStart={() => handleTaskTouchStart(t.id, t.title)}
+                onDragStart={(e) => handleTaskDragStart(e, task.id)}
+                onTouchStart={() => handleTaskTouchStart(task.id, task.title)}
                 onTouchMove={handleTaskTouchMove}
                 onTouchEnd={handleTaskTouchEnd}
-                title={deadlineStatusLabel(t.due_date)}
-                onClick={() => openPreview(t)}
-                style={{ cursor: 'pointer', opacity: touchTaskId === t.id ? 0.4 : 1 }}
+                title={deadlineStatusLabel(task.due_date, t)}
+                onClick={() => openPreview(task)}
+                style={{ cursor: 'pointer', opacity: touchTaskId === task.id ? 0.4 : 1 }}
               >
-                <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(t.due_date)}`, paddingTop: '4px' }}>{t.title}</div>
-                {t.job_application_id ? (() => {
-                  const a = appById.get(t.job_application_id!);
+                <div style={{ fontWeight: 700, borderTop: `3px solid ${deadlineColor(task.due_date)}`, paddingTop: '4px' }}>{task.title}</div>
+                {task.job_application_id ? (() => {
+                  const a = appById.get(task.job_application_id!);
                   const label = a ? `${a.company_name} — ${a.position}` : 'Linked application';
                   return (
-                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + t.job_application_id) }}>
+                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + task.job_application_id) }}>
                       {label}
                     </TaskApplication>
                   );
                 })() : (
                   <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>General Task</span>
                 )}
-                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {t.due_date ?? '-'}</div>
+                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {task.due_date ?? '-'}</div>
                 <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
+                  <span style={{ fontSize: '0.8rem' }}>{task.created_at ? new Date(task.created_at).toLocaleDateString() : ''}</span>
                   <div style={{ display:'flex', gap: '0.4rem' }}>
-                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>{t('common.edit')}</ActionButton>
-                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(task); }}>{t('common.edit')}</ActionButton>
+                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>🗑</DeleteIconButton>
                   </div>
                 </div>
               </TaskCard>
@@ -1079,35 +1079,35 @@ export const Tasks: FC = () => {
               <TaskColumnHeader>{t('tasks.done')} ({tasksBy('done').length})</TaskColumnHeader>
               <AddMini type='button' onClick={() => openCreateInStatus('done')}>+ {t('tasks.add')}</AddMini>
             </div>
-            {tasksBy('done').map(t => (
+            {tasksBy('done').map(task => (
               <TaskCard
-                key={t.id}
+                key={task.id}
                 draggable
-                onDragStart={(e) => handleTaskDragStart(e, t.id)}
-                onTouchStart={() => handleTaskTouchStart(t.id, t.title)}
+                onDragStart={(e) => handleTaskDragStart(e, task.id)}
+                onTouchStart={() => handleTaskTouchStart(task.id, task.title)}
                 onTouchMove={handleTaskTouchMove}
                 onTouchEnd={handleTaskTouchEnd}
-                onClick={() => openPreview(t)}
-                style={{ cursor: 'pointer', opacity: touchTaskId === t.id ? 0.4 : 1 }}
+                onClick={() => openPreview(task)}
+                style={{ cursor: 'pointer', opacity: touchTaskId === task.id ? 0.4 : 1 }}
               >
-                <div style={{ fontWeight: 700 }}>{t.title}</div>
-                {t.job_application_id ? (() => {
-                  const a = appById.get(t.job_application_id!);
+                <div style={{ fontWeight: 700 }}>{task.title}</div>
+                {task.job_application_id ? (() => {
+                  const a = appById.get(task.job_application_id!);
                   const label = a ? `${a.company_name} — ${a.position}` : 'Linked application';
                   return (
-                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + t.job_application_id) }}>
+                    <TaskApplication onClick={(e) => { e.stopPropagation(); navigate('/applications?appId=' + task.job_application_id) }}>
                       {label}
                     </TaskApplication>
                   );
                 })() : (
                   <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>General Task</span>
                 )}
-                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {t.due_date ?? '-'}</div>
+                <div style={{ color: '#9aa4b2', fontSize: '0.85rem' }}>Due: {task.due_date ?? '-'}</div>
                 <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
+                  <span style={{ fontSize: '0.8rem' }}>{task.created_at ? new Date(task.created_at).toLocaleDateString() : ''}</span>
                   <div style={{ display:'flex', gap: '0.4rem' }}>
-                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>{t('common.edit')}</ActionButton>
-                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(task); }}>{t('common.edit')}</ActionButton>
+                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>🗑</DeleteIconButton>
                   </div>
                 </div>
               </TaskCard>
@@ -1303,7 +1303,7 @@ export const Tasks: FC = () => {
   );
 };
 
-function deadlineStatusLabel(due: string | null): string {
+function deadlineStatusLabel(due: string | null, t: (key: string) => string): string {
   const dColor = ((): 'green' | 'yellow' | 'red' => {
     if (!due) return 'green';
     const today = new Date();
@@ -1313,7 +1313,7 @@ function deadlineStatusLabel(due: string | null): string {
     if (diffDays <= 3) return 'yellow';
     return 'green';
   })();
-  return dColor === 'red' ? t('tasks.overdue') : dColor === 'yellow' ? 'Forfaller snart' : 'På rett spor';
+  return dColor === 'red' ? t('tasks.overdue') : dColor === 'yellow' ? t('tasks.dueSoon') : t('tasks.onTrack');
 }
 
 function deadlineColor(due: string | null): string {
