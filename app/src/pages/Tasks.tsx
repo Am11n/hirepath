@@ -720,11 +720,11 @@ export const Tasks: FC = () => {
   const saveTask = async () => {
     if (!user) return;
     if (!title.trim()) {
-      setSaveError('Title is required');
+      setSaveError(t('tasks.titleRequired'));
       return;
     }
     if (!applicationId) {
-      setSaveError('Please link this task to an application');
+      setSaveError(t('tasks.linkRequired'));
       return;
     }
     setSaving(true);
@@ -746,7 +746,7 @@ export const Tasks: FC = () => {
       setCreateStatus(null);
       await refresh();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to create task';
+      const message = e instanceof Error ? e.message : t('tasks.createFailed');
       setSaveError(message);
     } finally {
       setSaving(false);
@@ -774,11 +774,11 @@ export const Tasks: FC = () => {
   const saveEdit = async () => {
     if (!user || !editId) return;
     if (!eTitle.trim()) {
-      setSaveErrorEdit('Title is required');
+      setSaveErrorEdit(t('tasks.titleRequired'));
       return;
     }
     if (!eApplicationId) {
-      setSaveErrorEdit('Please link this task to an application');
+      setSaveErrorEdit(t('tasks.linkRequired'));
       return;
     }
     setSavingEdit(true);
@@ -809,7 +809,7 @@ export const Tasks: FC = () => {
       setShowEdit(false);
       await refresh();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to update task';
+      const message = e instanceof Error ? e.message : t('tasks.updateFailed');
       setSaveErrorEdit(message);
     } finally {
       setSavingEdit(false);
@@ -942,16 +942,16 @@ export const Tasks: FC = () => {
             <ToggleButton $active={view==='list'} onClick={() => setView('list')}>List</ToggleButton>
             <ToggleButton $active={view==='kanban'} onClick={() => setView('kanban')}>Kanban</ToggleButton>
           </ViewToggle>
-          <CreateButton onClick={openCreate}>Create Task</CreateButton>
+          <CreateButton onClick={openCreate}>{t('tasks.createTask')}</CreateButton>
         </div>
       </TopBar>
       {view === 'list' && (
       <>
       <TabsContainer>
-        <Tab $active={activeTab === 'All'} onClick={() => setActiveTab('All')}>All</Tab>
-        <Tab $active={activeTab === 'Due Today'} onClick={() => setActiveTab('Due Today')}>Due Today</Tab>
-        <Tab $active={activeTab === 'Overdue'} onClick={() => setActiveTab('Overdue')}>Overdue</Tab>
-        <Tab $active={activeTab === 'Completed'} onClick={() => setActiveTab('Completed')}>Completed</Tab>
+        <Tab $active={activeTab === 'All'} onClick={() => setActiveTab('All')}>{t('tasks.all')}</Tab>
+        <Tab $active={activeTab === 'Due Today'} onClick={() => setActiveTab('Due Today')}>{t('tasks.dueToday')}</Tab>
+        <Tab $active={activeTab === 'Overdue'} onClick={() => setActiveTab('Overdue')}>{t('tasks.overdue')}</Tab>
+        <Tab $active={activeTab === 'Completed'} onClick={() => setActiveTab('Completed')}>{t('tasks.completed')}</Tab>
       </TabsContainer>
 
       <TaskListContainer>
@@ -981,8 +981,8 @@ export const Tasks: FC = () => {
               </TaskDetails>
             </TaskContent>
             <RowActions>
-              <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(task); }}>Edit</ActionButton>
-              <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>🗑</DeleteIconButton>
+              <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(task); }}>{t('common.edit')}</ActionButton>
+              <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id); }}>🗑</DeleteIconButton>
             </RowActions>
           </TaskItem>
         ))}
@@ -994,8 +994,8 @@ export const Tasks: FC = () => {
         <TaskKanban>
           <TaskColumn $variant="todo" data-task-status="todo" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'todo')}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <TaskColumnHeader>To Do ({tasksBy('todo').length})</TaskColumnHeader>
-              <AddMini type="button" onClick={() => openCreateInStatus('todo')}>+ Add task</AddMini>
+              <TaskColumnHeader>{t('tasks.toDo')} ({tasksBy('todo').length})</TaskColumnHeader>
+              <AddMini type='button' onClick={() => openCreateInStatus('todo')}>+ {t('tasks.add')}</AddMini>
             </div>
             {tasksBy('todo').map(t => (
               <TaskCard
@@ -1025,8 +1025,8 @@ export const Tasks: FC = () => {
                 <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
                   <div style={{ display:'flex', gap: '0.4rem' }}>
-                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>Edit</ActionButton>
-                    <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>{t('common.edit')}</ActionButton>
+                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
                   </div>
                 </div>
               </TaskCard>
@@ -1035,8 +1035,8 @@ export const Tasks: FC = () => {
 
           <TaskColumn $variant="in_progress" data-task-status="in_progress" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'in_progress')}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <TaskColumnHeader>In Progress ({tasksBy('in_progress').length})</TaskColumnHeader>
-              <AddMini type="button" onClick={() => openCreateInStatus('in_progress')}>+ Add task</AddMini>
+              <TaskColumnHeader>{t('tasks.inProgress')} ({tasksBy('in_progress').length})</TaskColumnHeader>
+              <AddMini type='button' onClick={() => openCreateInStatus('in_progress')}>+ {t('tasks.add')}</AddMini>
             </div>
             {tasksBy('in_progress').map(t => (
               <TaskCard
@@ -1066,8 +1066,8 @@ export const Tasks: FC = () => {
                 <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
                   <div style={{ display:'flex', gap: '0.4rem' }}>
-                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>Edit</ActionButton>
-                    <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>{t('common.edit')}</ActionButton>
+                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
                   </div>
                 </div>
               </TaskCard>
@@ -1076,8 +1076,8 @@ export const Tasks: FC = () => {
 
           <TaskColumn $variant="done" data-task-status="done" onDragOver={allowDrop} onDrop={(e) => handleTaskColumnDrop(e, 'done')}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <TaskColumnHeader>Done ({tasksBy('done').length})</TaskColumnHeader>
-              <AddMini type="button" onClick={() => openCreateInStatus('done')}>+ Add task</AddMini>
+              <TaskColumnHeader>{t('tasks.done')} ({tasksBy('done').length})</TaskColumnHeader>
+              <AddMini type='button' onClick={() => openCreateInStatus('done')}>+ {t('tasks.add')}</AddMini>
             </div>
             {tasksBy('done').map(t => (
               <TaskCard
@@ -1106,8 +1106,8 @@ export const Tasks: FC = () => {
                 <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.8rem' }}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</span>
                   <div style={{ display:'flex', gap: '0.4rem' }}>
-                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>Edit</ActionButton>
-                    <DeleteIconButton type="button" title="Delete" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
+                    <ActionButton type="button" onClick={(e) => { e.stopPropagation(); openEdit(t); }}>{t('common.edit')}</ActionButton>
+                    <DeleteIconButton type="button" title={t('common.delete')} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(t.id); }}>🗑</DeleteIconButton>
                   </div>
                 </div>
               </TaskCard>
@@ -1118,9 +1118,9 @@ export const Tasks: FC = () => {
 
       {(!loading && !error && rows.length === 0) && (
         <EmptyStateContainer>
-          <EmptyStateTitle>No more tasks found</EmptyStateTitle>
-          <EmptyStateText>Add a new task to stay organized.</EmptyStateText>
-          <CreateButton onClick={openCreate}>Create Task</CreateButton>
+          <EmptyStateTitle>{t('tasks.noMoreTasks')}</EmptyStateTitle>
+          <EmptyStateText>{t('tasks.addNewTask')}</EmptyStateText>
+          <CreateButton onClick={openCreate}>{t('tasks.createTask')}</CreateButton>
         </EmptyStateContainer>
       )}
 
@@ -1130,27 +1130,27 @@ export const Tasks: FC = () => {
             <ModalTitle>Create Task</ModalTitle>
             <ModalRow>
               <div>
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" placeholder="Follow up with company" value={title} onChange={(e) => setTitle(e.target.value)} />
+                <Label htmlFor='title'>{t('tasks.title')}</Label>
+                <Input id="title" placeholder="Følg opp med bedrift" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="due">Due Date (optional)</Label>
+                <Label htmlFor='due'>{t('tasks.dueDate')} (valgfritt)</Label>
                 <Input id="due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
               </div>
             </ModalRow>
             <ModalRow>
               <div>
-                <Label htmlFor="type">Type</Label>
+                <Label htmlFor='type'>{t('tasks.type')}</Label>
                 <Select id="type" value={taskType} onChange={(e) => setTaskType(e.target.value as 'note' | 'call' | 'email' | 'meeting' | 'other')}>
-                  <option value="note">Note</option>
-                  <option value="call">Call</option>
-                  <option value="email">Email</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="other">Other</option>
+                  <option value="note">{t('tasks.type.note')}</option>
+                  <option value="call">{t('tasks.type.call')}</option>
+                  <option value="email">{t('tasks.type.email')}</option>
+                  <option value="meeting">{t('tasks.type.meeting')}</option>
+                  <option value="other">{t('tasks.type.other')}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="app">Link to Application</Label>
+                <Label htmlFor='app'>{t('tasks.linkedApp')}</Label>
                 <Select id="app" value={applicationId} onChange={(e) => setApplicationId(e.target.value)}>
                   <option value="">Choose…</option>
                   {appOptions.map(opt => (
@@ -1161,8 +1161,8 @@ export const Tasks: FC = () => {
             </ModalRow>
             {saveError && <div style={{ color: '#f87171', marginTop: '0.25rem' }}>{saveError}</div>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <button onClick={() => setShowCreate(false)} disabled={saving} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>Cancel</button>
-              <button onClick={saveTask} disabled={saving || appOptions.length === 0} style={{ background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', color: 'white', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{saving ? 'Saving…' : 'Save'}</button>
+              <button onClick={() => setShowCreate(false)} disabled={saving} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{t('common.cancel')}</button>
+              <button onClick={saveTask} disabled={saving || appOptions.length === 0} style={{ background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', color: 'white', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{saving ? t('profile.saving') : t('common.save')}</button>
             </div>
             {appOptions.length === 0 && (
               <div style={{ color: '#94A3B8', marginTop: '0.5rem', fontSize: '0.85rem' }}>
@@ -1176,7 +1176,7 @@ export const Tasks: FC = () => {
       {showEdit && (
         <ModalBackdrop>
           <ModalCard>
-            <ModalTitle>Edit Task</ModalTitle>
+            <ModalTitle>{t('tasks.editTask')}</ModalTitle>
             <ModalRow>
               <div>
                 <Label htmlFor="e-title">Title</Label>
@@ -1191,11 +1191,11 @@ export const Tasks: FC = () => {
               <div>
                 <Label htmlFor="e-type">Type</Label>
                 <Select id="e-type" value={eType} onChange={(e) => setEType(e.target.value as 'note' | 'call' | 'email' | 'meeting' | 'other')}>
-                  <option value="note">Note</option>
-                  <option value="call">Call</option>
-                  <option value="email">Email</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="other">Other</option>
+                  <option value="note">{t('tasks.type.note')}</option>
+                  <option value="call">{t('tasks.type.call')}</option>
+                  <option value="email">{t('tasks.type.email')}</option>
+                  <option value="meeting">{t('tasks.type.meeting')}</option>
+                  <option value="other">{t('tasks.type.other')}</option>
                 </Select>
               </div>
               <div>
@@ -1216,12 +1216,12 @@ export const Tasks: FC = () => {
             </ModalRow>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input id="e-completed" type="checkbox" checked={eCompleted} onChange={(e) => setECompleted(e.target.checked)} />
-              <label htmlFor="e-completed" style={{ color: 'inherit', fontSize: '0.9rem' }}>Completed</label>
+              <label htmlFor="e-completed" style={{ color: 'inherit', fontSize: '0.9rem' }}>{t('tasks.completed')}</label>
             </div>
             {saveErrorEdit && <div style={{ color: '#f87171', marginTop: '0.5rem' }}>{saveErrorEdit}</div>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.75rem' }}>
-              <button onClick={() => setShowEdit(false)} disabled={savingEdit} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>Cancel</button>
-              <button onClick={saveEdit} disabled={savingEdit} style={{ background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', color: 'white', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{savingEdit ? 'Saving…' : 'Save Changes'}</button>
+              <button onClick={() => setShowEdit(false)} disabled={savingEdit} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{t('common.cancel')}</button>
+              <button onClick={saveEdit} disabled={savingEdit} style={{ background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', color: 'white', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{savingEdit ? t('profile.saving') : t('tasks.saveChanges')}</button>
             </div>
           </ModalCard>
         </ModalBackdrop>
@@ -1230,13 +1230,13 @@ export const Tasks: FC = () => {
       {confirmDeleteId && (
         <ModalBackdrop>
           <ModalCard>
-            <ModalTitle>Delete task</ModalTitle>
+            <ModalTitle>{t('tasks.deleteTask')}</ModalTitle>
             <p style={{ color: '#94A3B8', margin: '0 0 1rem 0' }}>
-              Are you sure you want to delete this task? This action cannot be undone.
+              {t('tasks.deleteConfirm')}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <button onClick={() => setConfirmDeleteId(null)} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>Cancel</button>
-              <button onClick={async () => { if (confirmDeleteId) { await deleteTask(confirmDeleteId); } setConfirmDeleteId(null); }} style={{ background: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>Delete</button>
+              <button onClick={() => setConfirmDeleteId(null)} style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{t('common.cancel')}</button>
+              <button onClick={async () => { if (confirmDeleteId) { await deleteTask(confirmDeleteId); } setConfirmDeleteId(null); }} style={{ background: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600 }}>{t('common.delete')}</button>
             </div>
           </ModalCard>
         </ModalBackdrop>
@@ -1265,7 +1265,7 @@ export const Tasks: FC = () => {
                       if (previewTask.completed) return 'Done';
                       const d = previewTask.due_date ? new Date(previewTask.due_date) : null;
                       const today = new Date(new Date().toDateString());
-                      if (d && d.getTime() < today.getTime()) return 'Overdue';
+                      if (d && d.getTime() < today.getTime()) return t('tasks.overdue');
                       return 'In Progress';
                     })();
                     return <span>{label}</span>;
@@ -1288,8 +1288,8 @@ export const Tasks: FC = () => {
                 : (previewTask.description || '—')
             }</div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <SecondaryButton type="button" onClick={() => setShowPreview(false)}>Close</SecondaryButton>
-              <PrimaryButton type="button" onClick={() => { setShowPreview(false); openEdit(previewTask); }}>Edit</PrimaryButton>
+              <SecondaryButton type="button" onClick={() => setShowPreview(false)}>{t('common.close')}</SecondaryButton>
+              <PrimaryButton type="button" onClick={() => { setShowPreview(false); openEdit(previewTask); }}>{t('common.edit')}</PrimaryButton>
             </div>
           </ModalCard>
         </ModalBackdrop>
@@ -1313,7 +1313,7 @@ function deadlineStatusLabel(due: string | null): string {
     if (diffDays <= 3) return 'yellow';
     return 'green';
   })();
-  return dColor === 'red' ? 'Overdue' : dColor === 'yellow' ? 'Due soon' : 'On track';
+  return dColor === 'red' ? t('tasks.overdue') : dColor === 'yellow' ? 'Forfaller snart' : 'På rett spor';
 }
 
 function deadlineColor(due: string | null): string {

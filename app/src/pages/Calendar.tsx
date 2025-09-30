@@ -583,7 +583,7 @@ export const Calendar: FC = () => {
 
   return (
     <CalendarContainer>
-      <Header>Calendar</Header>
+      <Header>{t('calendar.title')}</Header>
       <Legend>
         <EventTag color={green}><Dot color={green} /> {t('calendar.legend.interviews')}</EventTag>
         <EventTag color={orange}><Dot color={orange} /> {t('calendar.legend.deadlines')}</EventTag>

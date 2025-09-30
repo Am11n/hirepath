@@ -5,6 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../hooks/useAuth';
 import { useThemeMode } from '../contexts/themeMode';
+import { useI18n } from '../contexts/I18nProvider';
 import { supabase } from '../lib/supabaseClient';
 
 const Header = styled.header`
@@ -604,6 +605,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 	const { user, signOut } = useAuth();
 	const navigate = useNavigate();
 	const { mode, toggleMode } = useThemeMode();
+	const { t } = useI18n();
 
 	const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 	const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -789,7 +791,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 								id="search-input"
 								ref={searchInputRef}
 								type="text" 
-								placeholder="Search… (Ctrl + /)" 
+								placeholder={t('search.placeholder')} 
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								onFocus={() => setShowSearchSuggestions(true)}
@@ -797,15 +799,15 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 						</form>
 						{showSearchSuggestions && searchQuery.trim() && (
 							<SearchSuggestions>
-								<SearchCategory>SEARCH IN</SearchCategory>
+								<SearchCategory>{t('search.suggestions.title')}</SearchCategory>
 								<SearchSuggestionItem onClick={() => handleSuggestionClick('applications')}>
-									Applications
+									{t('search.suggestions.applications')}
 								</SearchSuggestionItem>
 								<SearchSuggestionItem onClick={() => handleSuggestionClick('tasks')}>
-									Tasks
+									{t('search.suggestions.tasks')}
 								</SearchSuggestionItem>
 								<SearchSuggestionItem onClick={() => handleSuggestionClick('documents')}>
-									Documents
+									{t('search.suggestions.documents')}
 								</SearchSuggestionItem>
 							</SearchSuggestions>
 						)}
@@ -815,13 +817,13 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 				<RightSection>
 					<IconGroup>
 						<IconContainer>
-							<IconButton aria-label="Toggle theme" onClick={toggleMode}>
+							<IconButton aria-label={t('navbar.toggleTheme')} onClick={toggleMode}>
 								<ThemeToggleIcon mode={mode} />
 							</IconButton>
 						</IconContainer>
 						<IconContainer ref={notificationsRef}>
 							<IconButton 
-								aria-label="Notifications" 
+								aria-label={t('navbar.notifications')} 
 								onClick={handleToggleNotifications}
 							>
 								<NotificationBellIcon />
@@ -830,7 +832,7 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 							{notificationsOpen && (
 								<Dropdown>
 									{notifications.length === 0 && (
-										<DropdownItem as="div">No notifications</DropdownItem>
+										<DropdownItem as='div'>{t('navbar.noNotifications')}</DropdownItem>
 									)}
 									{notifications.map(n => (
 										<DropdownItem as="div" key={`${n.type}-${n.id}-${n.createdAt}`}>
@@ -858,11 +860,11 @@ export const Navbar: FC<NavbarProps> = ({ onMenuToggle }) => {
 							  );
 							})()}
 							{userDropdownOpen && (
-								<Dropdown>
-									<DropdownLink to="/profile" onClick={() => setUserDropdownOpen(false)}>Settings</DropdownLink>
-									<Divider />
-									<DropdownItem href="#" onClick={handleSignOut}>Sign out</DropdownItem>
-								</Dropdown>
+									<Dropdown>
+										<DropdownLink to="/profile" onClick={() => setUserDropdownOpen(false)}>{t('navbar.settings')}</DropdownLink>
+										<Divider />
+										<DropdownItem href="#" onClick={handleSignOut}>{t('navbar.signOut')}</DropdownItem>
+									</Dropdown>
 							)}
 						</IconContainer>
 					) : (
